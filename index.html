@@ -511,6 +511,37 @@
       <div id="settings-restore-msg" style="display:none;margin-top:10px;font-size:12.5px;"></div>
     </div>
 
+    <h2 class="section-title">Cloud Sync <span class="stamp">Share live data across devices</span></h2>
+    <div class="panel">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">
+        By default, each device/browser keeps its own separate data. Connect a free <strong>Supabase</strong> project below to share the same live data across every device that signs in — phone, shop computer, anywhere.
+      </p>
+      <ol style="font-size:12px;color:var(--ink-soft);margin:0 0 14px;padding-left:18px;line-height:1.7;">
+        <li>Go to <span style="font-family:monospace;">supabase.com</span> → sign up free → <strong>New project</strong>.</li>
+        <li>Once created, go to <strong>SQL Editor</strong> and run the setup script below (copy it fully).</li>
+        <li>Go to <strong>Project Settings → API</strong>. Copy the <strong>Project URL</strong> and the <strong>anon public</strong> key.</li>
+        <li>Paste both below and click <strong>Connect &amp; Sync</strong>.</li>
+      </ol>
+      <div class="panel" style="background:#F5F0E6;margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-soft);">SQL setup script</label>
+          <button class="btn small outline" id="cs-copy-sql-btn">Copy</button>
+        </div>
+        <textarea id="cs-sql-script" readonly style="width:100%; height:110px; font-family:'Courier New',monospace; font-size:11px; padding:8px; border:1px solid var(--line); border-radius:6px; background:#fff;"></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="field" style="grid-column: span 2;"><label>Supabase Project URL</label><input id="cs-url" placeholder="https://xxxxx.supabase.co"/></div>
+        <div class="field" style="grid-column: span 2;"><label>Supabase Anon Key</label><input id="cs-key" placeholder="eyJhbGciOi..."/></div>
+        <div class="field"><label>Workspace ID</label><input id="cs-workspace" placeholder="e.g. my-shop" value="default"/></div>
+        <div class="field"><button class="btn" id="cs-connect-btn">Connect &amp; Sync</button></div>
+        <div class="field"><button class="btn outline" id="cs-sync-now-btn" style="display:none;">Sync Now</button></div>
+        <div class="field"><button class="btn outline" id="cs-disconnect-btn" style="display:none;">Disconnect</button></div>
+      </div>
+      <div id="cs-status" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);">Not connected — using local data only on this device.</div>
+      <div id="cs-msg" style="display:none;margin-top:8px;font-size:12.5px;"></div>
+      <p style="margin:10px 0 0;font-size:11px;color:var(--ink-soft);">All devices must use the same Project URL, Anon Key, and Workspace ID to share data. Anyone with these three values can read/write this workspace's data directly, bypassing the app's login — keep them as private as a password.</p>
+    </div>
+
     <h2 class="section-title">Google Drive Backup <span class="stamp">Auto-saves a daily JSON backup</span></h2>
     <div class="panel">
       <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">
@@ -574,7 +605,7 @@
 
   let items = [];
   let txns = [];
-  const defaultSettings = { companyName:'Kavaad', tagline:'Stock & Cashbook Ledger', address:'', phone:'', whatsapp:'', googleClientId:'', autoBackupEnabled:true };
+  const defaultSettings = { companyName:'Kavaad', tagline:'Stock & Cashbook Ledger', address:'', phone:'', whatsapp:'', googleClientId:'', autoBackupEnabled:true, csUrl:'', csKey:'', csWorkspace:'default', csEnabled:false };
   let settings = { ...defaultSettings };
 
   const ALL_TABS = ['dashboard','inventory','purchases','sales','transactions','reports'];
@@ -595,6 +626,7 @@
   }
   function saveSettingsToStorage(){
     try{ localStorage.setItem('kavaad_settings', JSON.stringify(settings)); }catch(e){ console.error(e); }
+    csSchedulePush();
   }
   function applySettingsToUI(){
     $('#brand-name').textContent = settings.companyName || 'Kavaad';
@@ -606,6 +638,9 @@
     $('#set-whatsapp').value = settings.whatsapp || '';
     $('#gd-client-id').value = settings.googleClientId || '';
     $('#gd-auto-toggle').value = settings.autoBackupEnabled === false ? 'off' : 'on';
+    $('#cs-url').value = settings.csUrl || '';
+    $('#cs-key').value = settings.csKey || '';
+    $('#cs-workspace').value = settings.csWorkspace || 'default';
   }
 
   async function loadAll(){
@@ -621,14 +656,20 @@
     loadUsers();
     renderUserPermissionCheckboxes();
     renderUsersTable();
+    initCloudSyncUI();
     renderAll();
     initAuth();
+    if(settings.csEnabled && settings.csUrl && settings.csKey){
+      csConnect(true);
+    }
   }
   async function saveItems(){
     try{ localStorage.setItem('kavaad_items', JSON.stringify(items)); }catch(e){ console.error(e); }
+    csSchedulePush();
   }
   async function saveTxns(){
     try{ localStorage.setItem('kavaad_txns', JSON.stringify(txns)); }catch(e){ console.error(e); }
+    csSchedulePush();
   }
 
   // ---------- Users & Access ----------
@@ -644,6 +685,7 @@
   }
   function saveUsers(){
     try{ localStorage.setItem('kavaad_users', JSON.stringify(users)); }catch(e){ console.error(e); }
+    csSchedulePush();
   }
 
   function initAuth(){
@@ -915,6 +957,212 @@
     renderAll();
     showSettingsMsg('All data has been reset.');
     setTimeout(()=>showSettingsMsg(''), 2500);
+  });
+
+  // ---------- Cloud Sync (Supabase) ----------
+  const CS_SQL_SCRIPT = `create table if not exists kavaad_workspace (
+  id text primary key,
+  items jsonb default '[]'::jsonb,
+  txns jsonb default '[]'::jsonb,
+  settings jsonb default '{}'::jsonb,
+  users jsonb default '[]'::jsonb,
+  updated_at timestamptz default now()
+);
+alter table kavaad_workspace enable row level security;
+drop policy if exists "Allow all access" on kavaad_workspace;
+create policy "Allow all access" on kavaad_workspace for all using (true) with check (true);
+alter publication supabase_realtime add table kavaad_workspace;`;
+
+  let supabaseClient = null;
+  let cloudSyncEnabled = false;
+  let csPushTimer = null;
+  let csRealtimeChannel = null;
+  let csLibraryPromise = null;
+
+  function initCloudSyncUI(){
+    $('#cs-sql-script').value = CS_SQL_SCRIPT;
+    updateCloudSyncStatusUI();
+  }
+
+  $('#cs-copy-sql-btn').addEventListener('click', ()=>{
+    $('#cs-sql-script').select();
+    try{
+      navigator.clipboard.writeText(CS_SQL_SCRIPT).then(()=>{
+        csShowMsg('SQL copied to clipboard.', false);
+      }).catch(()=>{ document.execCommand('copy'); csShowMsg('SQL copied.', false); });
+    }catch(e){ document.execCommand('copy'); csShowMsg('SQL copied.', false); }
+  });
+
+  function csShowMsg(text, isError){
+    const el = $('#cs-msg');
+    el.textContent = text;
+    el.style.color = isError ? 'var(--red)' : 'var(--green)';
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function updateCloudSyncStatusUI(){
+    if(cloudSyncEnabled){
+      $('#cs-status').textContent = `Connected — sharing live data with workspace "${settings.csWorkspace || 'default'}".`;
+      $('#cs-connect-btn').textContent = 'Reconnect';
+      $('#cs-sync-now-btn').style.display = 'inline-block';
+      $('#cs-disconnect-btn').style.display = 'inline-block';
+    } else {
+      $('#cs-status').textContent = 'Not connected — using local data only on this device.';
+      $('#cs-connect-btn').textContent = 'Connect & Sync';
+      $('#cs-sync-now-btn').style.display = 'none';
+      $('#cs-disconnect-btn').style.display = 'none';
+    }
+  }
+
+  function csLoadLibrary(){
+    if(csLibraryPromise) return csLibraryPromise;
+    csLibraryPromise = new Promise((resolve, reject)=>{
+      if(window.supabase && window.supabase.createClient){ resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+      s.async = true;
+      s.onload = ()=> resolve();
+      s.onerror = ()=> reject(new Error('Could not load the Supabase library. Check your internet connection.'));
+      document.head.appendChild(s);
+    });
+    return csLibraryPromise;
+  }
+
+  function csGetSyncableSettings(){
+    const { csUrl, csKey, csWorkspace, csEnabled, ...rest } = settings;
+    return rest;
+  }
+
+  async function csConnect(silent){
+    const url = $('#cs-url').value.trim();
+    const key = $('#cs-key').value.trim();
+    const workspace = $('#cs-workspace').value.trim() || 'default';
+    if(!url || !key){
+      if(!silent) csShowMsg('Enter your Supabase Project URL and Anon Key first.', true);
+      return;
+    }
+    try{
+      await csLoadLibrary();
+      supabaseClient = window.supabase.createClient(url, key);
+
+      const { data, error } = await supabaseClient
+        .from('kavaad_workspace')
+        .select('*')
+        .eq('id', workspace)
+        .maybeSingle();
+
+      if(error) throw error;
+
+      if(data){
+        const useCloud = silent ? true : confirm(
+          `Found existing cloud data for workspace "${workspace}" (last updated ${new Date(data.updated_at).toLocaleString('en-IN')}).\n\nClick OK to load that data onto this device (replacing what's here now).\nClick Cancel to instead upload THIS device's current data to the cloud, replacing it there.`
+        );
+        if(useCloud){
+          items = data.items || [];
+          txns = data.txns || [];
+          if(data.users && data.users.length) users = data.users;
+          if(data.settings) settings = { ...settings, ...data.settings };
+          await saveItemsLocalOnly();
+          await saveTxnsLocalOnly();
+          saveUsersLocalOnly();
+          saveSettingsLocalOnly();
+          applySettingsToUI();
+        } else {
+          await csPushNow(workspace);
+        }
+      } else {
+        await csPushNow(workspace);
+      }
+
+      settings.csUrl = url; settings.csKey = key; settings.csWorkspace = workspace; settings.csEnabled = true;
+      saveSettingsLocalOnly();
+      cloudSyncEnabled = true;
+      csSubscribeRealtime(workspace);
+      updateCloudSyncStatusUI();
+      if(!silent) csShowMsg('Connected. Data will now sync automatically.', false);
+      renderAll();
+    }catch(err){
+      cloudSyncEnabled = false;
+      updateCloudSyncStatusUI();
+      csShowMsg('Connection failed: ' + (err.message || err), true);
+    }
+  }
+
+  async function csPushNow(workspace){
+    if(!supabaseClient) return;
+    const row = {
+      id: workspace,
+      items, txns, users,
+      settings: csGetSyncableSettings(),
+      updated_at: new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('kavaad_workspace').upsert(row, { onConflict: 'id' });
+    if(error) throw error;
+  }
+
+  function csSchedulePush(){
+    if(!cloudSyncEnabled || !supabaseClient) return;
+    clearTimeout(csPushTimer);
+    csPushTimer = setTimeout(async ()=>{
+      try{ await csPushNow(settings.csWorkspace || 'default'); }
+      catch(e){ csShowMsg('Sync failed: ' + (e.message||e), true); }
+    }, 700);
+  }
+
+  async function csPullNow(){
+    if(!supabaseClient) return;
+    const workspace = settings.csWorkspace || 'default';
+    const { data, error } = await supabaseClient
+      .from('kavaad_workspace')
+      .select('*')
+      .eq('id', workspace)
+      .maybeSingle();
+    if(error){ csShowMsg('Sync pull failed: ' + error.message, true); return; }
+    if(!data) return;
+    items = data.items || [];
+    txns = data.txns || [];
+    if(data.users && data.users.length) users = data.users;
+    if(data.settings) settings = { ...settings, ...data.settings };
+    await saveItemsLocalOnly();
+    await saveTxnsLocalOnly();
+    saveUsersLocalOnly();
+    saveSettingsLocalOnly();
+    applySettingsToUI();
+    renderAll();
+  }
+
+  function csSubscribeRealtime(workspace){
+    if(csRealtimeChannel){ try{ supabaseClient.removeChannel(csRealtimeChannel); }catch(e){} }
+    csRealtimeChannel = supabaseClient
+      .channel('kavaad_workspace_changes_'+workspace)
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'kavaad_workspace', filter:`id=eq.${workspace}` }, ()=>{
+        csPullNow();
+      })
+      .subscribe();
+  }
+
+  // Local-only save helpers (used during sync to avoid re-triggering a push loop)
+  async function saveItemsLocalOnly(){ try{ localStorage.setItem('kavaad_items', JSON.stringify(items)); }catch(e){} }
+  async function saveTxnsLocalOnly(){ try{ localStorage.setItem('kavaad_txns', JSON.stringify(txns)); }catch(e){} }
+  function saveUsersLocalOnly(){ try{ localStorage.setItem('kavaad_users', JSON.stringify(users)); }catch(e){} }
+  function saveSettingsLocalOnly(){ try{ localStorage.setItem('kavaad_settings', JSON.stringify(settings)); }catch(e){} }
+
+  $('#cs-connect-btn').addEventListener('click', ()=>{ if(isAdmin()) csConnect(false); });
+  $('#cs-sync-now-btn').addEventListener('click', async ()=>{
+    if(!isAdmin()) return;
+    csShowMsg('Syncing…', false);
+    try{ await csPushNow(settings.csWorkspace || 'default'); await csPullNow(); csShowMsg('Synced.', false); }
+    catch(e){ csShowMsg('Sync failed: ' + (e.message||e), true); }
+  });
+  $('#cs-disconnect-btn').addEventListener('click', ()=>{
+    if(!isAdmin()) return;
+    if(csRealtimeChannel){ try{ supabaseClient.removeChannel(csRealtimeChannel); }catch(e){} csRealtimeChannel = null; }
+    supabaseClient = null;
+    cloudSyncEnabled = false;
+    settings.csEnabled = false;
+    saveSettingsLocalOnly();
+    updateCloudSyncStatusUI();
+    csShowMsg('Disconnected. This device now keeps its own local data only.', false);
   });
 
   // ---------- Google Drive daily backup ----------
