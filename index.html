@@ -1,0 +1,2163 @@
+<style>
+  :root{
+    --paper:#E9E3D5;
+    --paper-card:#FFFFFF;
+    --ink:#1F2A44;
+    --ink-soft:#5B6478;
+    --line:#E1D9C8;
+    --red:#A13D34;
+    --red-soft:#F1DFDA;
+    --green:#3F6B4F;
+    --green-soft:#DCE7DE;
+    --gold:#B08A3E;
+    --shadow-xs: 0 1px 2px rgba(31,42,68,0.06);
+    --shadow-sm: 0 2px 6px rgba(31,42,68,0.08), 0 1px 2px rgba(31,42,68,0.05);
+    --shadow-md: 0 8px 24px rgba(31,42,68,0.14), 0 2px 6px rgba(31,42,68,0.08);
+    --shadow-lg: 0 14px 38px rgba(31,42,68,0.18), 0 4px 10px rgba(31,42,68,0.10);
+    --radius: 12px;
+    font-family: 'Inter', -apple-system, sans-serif;
+  }
+  @font-face{ font-family:'Zilla'; src:local('Zilla Slab'); }
+  *{box-sizing:border-box;}
+  #ledger-root{
+    background: radial-gradient(circle at 20% 0%, #F1ECE0 0%, var(--paper) 55%);
+    color: var(--ink);
+    min-height: 100%;
+    padding: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .headband{
+    background: linear-gradient(155deg, #232F50 0%, var(--ink) 55%, #16203A 100%);
+    color: var(--paper-card);
+    padding: 20px 32px;
+    display:flex; align-items:center; justify-content:space-between;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 18px rgba(15,20,36,0.28);
+    z-index: 2;
+  }
+  .headband::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:0; height:3px;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    opacity:.85;
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand-mark{
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight:700; font-size:24px; letter-spacing:.3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+  }
+  .brand-sub{ font-size:10.5px; letter-spacing:2.2px; text-transform:uppercase; color:#9AA3BC; }
+  .headband .date{ font-family: 'Courier New', monospace; font-size:12px; color:#9AA3BC; }
+  .btn-header{
+    padding:5px 12px; border:1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.06);
+    color:#D6DAE6; font-size:10.5px; letter-spacing:.8px; text-transform:uppercase;
+    border-radius:6px; cursor:pointer; font-family:'Inter',sans-serif;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .btn-header:hover{ background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.5); color:#fff; }
+
+  .app-shell{ display:flex; align-items:flex-start; }
+
+  .side-tabs{
+    order:1;
+    width:210px; flex-shrink:0;
+    background: linear-gradient(180deg, #FDFCF9 0%, #F6F1E7 100%);
+    border-right: 1px solid var(--line);
+    box-shadow: var(--shadow-md);
+    min-height: calc(100vh - 76px);
+    position: sticky; top:0;
+    padding: 16px 0;
+    z-index: 1;
+  }
+  .tab{
+    font-family: Georgia, serif; font-size:13.5px; letter-spacing:.2px;
+    padding: 14px 24px; cursor:pointer; color: var(--ink-soft);
+    text-align:left;
+    border-left: 3px solid transparent;
+    margin: 2px 8px;
+    border-radius: 8px;
+    user-select:none;
+    transition: background .15s, color .15s, box-shadow .15s, transform .1s;
+  }
+  .tab:hover{ color: var(--ink); background: rgba(176,138,62,0.09); transform: translateX(2px); }
+  .tab.active{
+    color: var(--ink); border-left-color: var(--red); font-weight:700;
+    background: var(--paper-card);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .main-content{ order:2; flex:1; min-width:0; }
+
+  .view{ display:none; padding: 26px 32px 44px; max-width:1150px; margin:0 auto; }
+  .view.active{ display:block; }
+
+  .hero-cards-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; margin-bottom:20px; }
+  .stat-card-hero{
+    background: linear-gradient(155deg, #232F50 0%, var(--ink) 55%, #16203A 100%);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 24px 28px;
+    position: relative;
+    overflow: hidden;
+    color: var(--paper-card);
+    transition: transform .18s, box-shadow .18s;
+  }
+  .stat-card-hero:hover{ transform: translateY(-3px); box-shadow: 0 20px 46px rgba(31,42,68,0.24), 0 6px 14px rgba(31,42,68,0.14); }
+  .stat-card-hero::after{
+    content:""; position:absolute; right:-30px; top:-30px; width:120px; height:120px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  }
+  .stat-card-hero.cash{ background: linear-gradient(155deg, #3F6B4F 0%, #2C4E3A 60%, #1E3829 100%); }
+  .stat-card-hero.bank{ background: linear-gradient(155deg, #2C4A80 0%, #1F3760 60%, #16264A 100%); }
+  .hero-label{ font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.65); margin-bottom:10px; }
+  .hero-value{ font-family:'Courier New',monospace; font-size:36px; font-weight:700; text-shadow:0 2px 6px rgba(0,0,0,0.25); }
+  .hero-sub{ font-size:11px; color:rgba(255,255,255,0.55); margin-top:8px; }
+
+  .cards-row{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:26px; }
+  .stat-card{
+    background: linear-gradient(160deg, var(--paper-card) 0%, #FAF7F0 100%);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 16px 18px;
+    position:relative;
+    transition: box-shadow .18s, transform .18s;
+  }
+  .stat-card:hover{ box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .stat-card.pos{ border-left-color: var(--green); }
+  .stat-card.neg{ border-left-color: var(--red); }
+  .stat-card.clickable{ cursor:pointer; }
+  .stat-card.clickable:hover{ border-left-color: var(--gold); }
+  .stat-label{ font-size:10.5px; letter-spacing:1.6px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px; }
+  .stat-value{ font-family:'Courier New',monospace; font-size:24px; font-weight:700; }
+
+  h2.section-title{
+    font-family: Georgia, serif; font-size:17.5px; margin: 28px 0 13px;
+    padding-bottom:8px; border-bottom: 1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  h2.section-title span.stamp{
+    font-family:'Courier New',monospace; font-size:10px; letter-spacing:1px;
+    color: var(--ink-soft); text-transform:uppercase;
+  }
+
+  .panel{
+    background: linear-gradient(160deg, var(--paper-card) 0%, #FBF8F1 100%);
+    border:1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow-sm);
+    padding:20px; margin-bottom:22px;
+  }
+  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; align-items:end; }
+  .field label{ display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:4px; }
+  .field input, .field select{
+    width:100%; padding:9px 10px; border:1px solid var(--line); background:#fff;
+    font-family:'Inter',sans-serif; font-size:13.5px; color:var(--ink); border-radius:7px;
+    box-shadow: inset 0 1px 2px rgba(31,42,68,0.05);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--gold); box-shadow: 0 0 0 3px rgba(176,138,62,0.18); }
+  .btn{
+    padding:10px 17px; border:1px solid var(--ink);
+    background: linear-gradient(160deg, #2B3763 0%, var(--ink) 60%, #16203A 100%);
+    color: var(--paper-card);
+    font-size:12.5px; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; border-radius:7px;
+    box-shadow: var(--shadow-xs);
+    transition: box-shadow .15s, transform .1s, filter .15s;
+  }
+  .btn:hover{ box-shadow: var(--shadow-sm); filter:brightness(1.08); }
+  .btn:active{ transform: translateY(1px); box-shadow: none; }
+  .btn.outline{ background:var(--paper-card); color:var(--ink); box-shadow: var(--shadow-xs); }
+  .btn.outline:hover{ background: #FBF8F1; }
+  .btn.small{ padding:6px 11px; font-size:11px; }
+  .btn.danger{ border-color:var(--red); color:var(--red); background:var(--paper-card); }
+  .btn.danger:hover{ background:var(--red-soft); }
+
+  table{ width:100%; border-collapse:collapse; background:var(--paper-card); border-radius: var(--radius); overflow:hidden; }
+  thead th{
+    text-align:left; font-size:10.5px; letter-spacing:1.2px; text-transform:uppercase;
+    color:var(--ink-soft); padding:11px 12px; border-bottom:2px solid var(--ink);
+    background: linear-gradient(180deg, #F7F2E7 0%, #EFE8D8 100%);
+  }
+  tbody td{ padding:10px 12px; border-bottom:1px solid var(--line); font-size:13.5px; }
+  tbody tr:hover{ background: rgba(176,138,62,0.06); }
+  .num{ font-family:'Courier New',monospace; text-align:right; }
+  .tag{
+    display:inline-block; font-family:'Courier New',monospace; font-size:10.5px;
+    padding:2px 7px; border:1px solid var(--gold); color:#7a5f28; letter-spacing:.4px;
+    border-radius:10px; background:#FBF3E1;
+  }
+  .type-income{ color:var(--green); font-weight:700; }
+  .type-expense{ color:var(--red); font-weight:700; }
+  .empty-row td{ text-align:center; color:var(--ink-soft); font-style:italic; padding:24px; }
+
+  .bar-row{ display:flex; align-items:center; gap:10px; margin-bottom:9px; }
+  .bar-label{ width:150px; font-size:12.5px; flex-shrink:0; }
+  .bar-track{ flex:1; background:#E8E1D2; height:16px; position:relative; border-radius:5px; overflow:hidden; box-shadow: inset 0 1px 3px rgba(31,42,68,0.12); }
+  .bar-fill{ height:100%; border-radius:5px; box-shadow: 0 1px 2px rgba(0,0,0,0.15) inset; }
+  .bar-fill.green{ background: linear-gradient(180deg, #4E8064 0%, var(--green) 100%); }
+  .bar-fill.red{ background: linear-gradient(180deg, #B84D42 0%, var(--red) 100%); }
+  .bar-fill.ink{ background: linear-gradient(180deg, #2B3763 0%, var(--ink) 100%); }
+  .bar-value{ width:100px; text-align:right; font-family:'Courier New',monospace; font-size:12.5px; flex-shrink:0; }
+
+  .report-toggle{ display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .report-toggle .btn.outline.active{ background: linear-gradient(160deg, #2B3763 0%, var(--ink) 60%, #16203A 100%); color:var(--paper-card); }
+
+  .filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; align-items:end; }
+  .filters .field{ width:160px; }
+
+  .net-line{ font-family:'Courier New',monospace; font-size:15px; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); }
+
+  ::placeholder{ color:#a9a290; }
+
+  @media (max-width: 760px){
+    .app-shell{ flex-direction:column; }
+    .side-tabs{
+      order:1; width:100%; min-height:auto; position:static;
+      display:flex; flex-wrap:wrap; gap:2px; padding:8px 10px;
+      border-right:none; border-bottom:2px solid var(--ink); box-shadow:none;
+    }
+    .tab{ text-align:center; border-left:none; border-bottom:3px solid transparent; padding:9px 14px; flex:1 1 auto; margin:2px; }
+    .tab.active{ border-left:none; border-bottom-color:var(--red); }
+    .main-content{ order:2; }
+    .view{ padding: 18px 16px 32px; }
+  }
+</style>
+
+<div id="login-screen" style="display:none; min-height:100vh; background: radial-gradient(circle at 20% 0%, #F1ECE0 0%, #E9E3D5 55%); font-family:'Inter',sans-serif; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:#fff; border-radius:14px; box-shadow:0 14px 38px rgba(31,42,68,0.18); padding:32px; width:100%; max-width:380px;">
+    <div style="font-family:Georgia,serif; font-weight:700; font-size:22px; color:#1F2A44; text-align:center;" id="login-brand">Kavaad</div>
+    <div style="text-align:center; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#5B6478; margin-bottom:22px;" id="login-subtitle">Select a user to continue</div>
+    <div id="login-user-list" style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;"></div>
+    <div id="login-password-area" style="display:none; margin-top:6px;">
+      <label style="display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:#5B6478; margin-bottom:4px;">Password</label>
+      <input id="login-password-input" type="password" style="width:100%; padding:9px 10px; border:1px solid #E1D9C8; border-radius:7px; font-size:13.5px; margin-bottom:10px;"/>
+      <div id="login-error" style="display:none; color:#A13D34; font-size:12px; margin-bottom:8px;"></div>
+      <button id="login-submit-btn" class="btn" style="width:100%;">Continue</button>
+      <button id="login-back-btn" class="btn outline" style="width:100%; margin-top:8px;">Back</button>
+    </div>
+    <div id="login-setup-area" style="display:none; margin-top:6px;">
+      <p style="font-size:12px; color:#5B6478; margin:0 0 10px;">This account doesn't have a password yet. Set one to continue — you'll need it every time you sign in from now on.</p>
+      <label style="display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:#5B6478; margin-bottom:4px;">New password</label>
+      <input id="login-setup-password" type="password" style="width:100%; padding:9px 10px; border:1px solid #E1D9C8; border-radius:7px; font-size:13.5px; margin-bottom:10px;"/>
+      <label style="display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:#5B6478; margin-bottom:4px;">Confirm password</label>
+      <input id="login-setup-password-confirm" type="password" style="width:100%; padding:9px 10px; border:1px solid #E1D9C8; border-radius:7px; font-size:13.5px; margin-bottom:10px;"/>
+      <div id="login-setup-error" style="display:none; color:#A13D34; font-size:12px; margin-bottom:8px;"></div>
+      <button id="login-setup-submit-btn" class="btn" style="width:100%;">Set Password &amp; Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="ledger-root">
+  <div class="headband">
+    <div class="brand">
+      <div class="brand-mark" id="brand-name">Kavaad</div>
+      <div class="brand-sub" id="brand-sub">Stock &amp; Cashbook Ledger</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div style="text-align:right;">
+        <div style="font-size:12px; color:#fff; margin-bottom:6px;" id="current-user-name">Admin</div>
+        <div style="display:flex; gap:6px; justify-content:flex-end;">
+          <button id="switch-user-link" class="btn-header">Switch User</button>
+          <button id="logout-link" class="btn-header">Logout</button>
+        </div>
+      </div>
+      <div class="date" id="today-date"></div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+  <nav class="side-tabs">
+    <div class="tab active" data-view="dashboard">Dashboard</div>
+    <div class="tab" data-view="inventory">Inventory</div>
+    <div class="tab" data-view="purchases">Purchases</div>
+    <div class="tab" data-view="sales">Sales</div>
+    <div class="tab" data-view="transactions">Income &amp; Expense</div>
+    <div class="tab" data-view="reports">Reports</div>
+    <div class="tab" data-view="settings">Settings</div>
+  </nav>
+  <div class="main-content">
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="hero-cards-row" id="dash-hero-cards"></div>
+    <div class="cards-row" id="dash-cards"></div>
+    <h2 class="section-title" id="pending-payments-anchor">Pending Payments <span class="stamp">Sales &amp; purchases marked Pending</span></h2>
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th class="num">Amount</th><th>Note</th></tr></thead>
+      <tbody id="dash-pending"></tbody>
+    </table>
+    <h2 class="section-title">Low Stock Watch <span class="stamp">Qty at or below reorder level</span></h2>
+    <table>
+      <thead><tr><th>Item</th><th>Category</th><th class="num">Qty</th><th class="num">Reorder At</th></tr></thead>
+      <tbody id="dash-lowstock"></tbody>
+    </table>
+    <h2 class="section-title">Recent Entries <span class="stamp">Last 6 transactions</span></h2>
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th class="num">Amount</th></tr></thead>
+      <tbody id="dash-recent"></tbody>
+    </table>
+  </div>
+
+  <!-- INVENTORY -->
+  <div class="view" id="view-inventory">
+    <h2 class="section-title" id="inv-form-title">Add Stock Item</h2>
+    <div class="panel">
+      <div class="form-grid" id="inv-form">
+        <div class="field"><label>Item name</label><input id="inv-name" placeholder="e.g. Basmati Rice 5kg"/></div>
+        <div class="field"><label>Category</label><input id="inv-cat" list="inv-cat-list" placeholder="e.g. Grocery"/><datalist id="inv-cat-list"></datalist></div>
+        <div class="field"><label>Quantity</label><input id="inv-qty" type="number" min="0" step="1" placeholder="0"/></div>
+        <div class="field"><label>Unit</label><input id="inv-unit" placeholder="pcs / kg / box"/></div>
+        <div class="field"><label>Cost price</label><input id="inv-cost" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Sell price</label><input id="inv-sell" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Reorder level</label><input id="inv-reorder" type="number" min="0" step="1" placeholder="0"/></div>
+        <div class="field"><button class="btn" id="inv-add-btn">Add Item</button></div>
+        <div class="field"><button class="btn outline" id="inv-cancel-btn" style="display:none;">Cancel</button></div>
+      </div>
+    </div>
+    <h2 class="section-title">Stock Register <span class="stamp" id="inv-count"></span></h2>
+    <table>
+      <thead><tr>
+        <th>Item</th><th>Category</th><th class="num">Qty</th><th>Unit</th>
+        <th class="num">Cost</th><th class="num">Sell</th><th class="num">Stock Value</th><th></th>
+      </tr></thead>
+      <tbody id="inv-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- PURCHASES -->
+  <div class="view" id="view-purchases">
+    <h2 class="section-title" id="purchase-form-title">Purchase Stock <span class="stamp">Increases quantity &amp; logs expense automatically</span></h2>
+    <div class="panel">
+      <div class="form-grid" id="purchase-form">
+        <div class="field"><label>Item</label>
+          <select id="purchase-item"><option value="">Select item...</option></select>
+        </div>
+        <div class="field"><label>Current stock</label><input id="purchase-available" disabled placeholder="—"/></div>
+        <div class="field"><label>Quantity purchased</label><input id="purchase-qty" type="number" min="1" step="1" placeholder="0"/></div>
+        <div class="field"><label>Cost per unit</label><input id="purchase-price" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Date</label><input id="purchase-date" type="date"/></div>
+        <div class="field"><label>Payment mode</label>
+          <select id="purchase-payment">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank">Bank</option>
+            <option value="Cash+UPI">Cash+UPI</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="field"><label>Supplier / note</label><input id="purchase-note" placeholder="optional"/></div>
+        <div class="field"><button class="btn" id="purchase-btn">Record Purchase</button></div>
+        <div class="field"><button class="btn outline" id="purchase-cancel-btn" style="display:none;">Cancel</button></div>
+      </div>
+      <div id="purchase-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--red);"></div>
+      <p style="margin:10px 0 0;font-size:11.5px;color:var(--ink-soft);">New item? Add it first in the Inventory tab, then purchase stock for it here.</p>
+    </div>
+    <h2 class="section-title">Purchase History <span class="stamp" id="purchase-count"></span></h2>
+    <table>
+      <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Cost/Unit</th><th class="num">Amount</th><th>Payment</th><th>Note</th><th></th></tr></thead>
+      <tbody id="purchase-table-body"></tbody>
+    </table>
+    <p style="margin-top:8px;font-size:11px;color:var(--ink-soft);">Removing a purchase entry deletes the expense record and automatically removes that quantity from stock again.</p>
+  </div>
+
+  <!-- SALES -->
+  <div class="view" id="view-sales">
+    <h2 class="section-title" id="sale-form-title">Sell Stock <span class="stamp">Reduces quantity &amp; logs income automatically</span></h2>
+    <div class="panel">
+      <div class="form-grid" id="sale-form">
+        <div class="field"><label>Item</label>
+          <select id="sale-item"><option value="">Select item...</option></select>
+        </div>
+        <div class="field"><label>Available</label><input id="sale-available" disabled placeholder="—"/></div>
+        <div class="field"><label>Quantity to sell</label><input id="sale-qty" type="number" min="1" step="1" placeholder="0"/></div>
+        <div class="field"><label>Price per unit</label><input id="sale-price" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Date</label><input id="sale-date" type="date"/></div>
+        <div class="field"><label>Payment mode</label>
+          <select id="sale-payment">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank">Bank</option>
+            <option value="Cash+UPI">Cash+UPI</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="field"><label>Customer name</label><input id="sale-customer-name" placeholder="optional"/></div>
+        <div class="field"><label>Mobile number</label><input id="sale-customer-mobile" type="tel" placeholder="optional"/></div>
+        <div class="field"><label>Note</label><input id="sale-note" placeholder="optional"/></div>
+        <div class="field"><button class="btn" id="sale-btn">Record Sale</button></div>
+        <div class="field"><button class="btn outline" id="sale-cancel-btn" style="display:none;">Cancel</button></div>
+      </div>
+      <div id="sale-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--red);"></div>
+    </div>
+    <h2 class="section-title">Sales History <span class="stamp" id="sale-count"></span></h2>
+    <table>
+      <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Price/Unit</th><th class="num">Amount</th><th>Payment</th><th>Customer</th><th>Note</th><th></th></tr></thead>
+      <tbody id="sale-table-body"></tbody>
+    </table>
+    <p style="margin-top:8px;font-size:11px;color:var(--ink-soft);">Removing a sale entry deletes the income record and automatically adds that quantity back to stock.</p>
+  </div>
+
+  <!-- TRANSACTIONS -->
+  <div class="view" id="view-transactions">
+
+    <h2 class="section-title" id="txn-form-title">Record Entry</h2>
+    <div class="panel">
+      <div class="form-grid" id="txn-form">
+        <div class="field"><label>Type</label>
+          <select id="txn-type"><option value="income">Income</option><option value="expense">Expense</option></select>
+        </div>
+        <div class="field"><label>Date</label><input id="txn-date" type="date"/></div>
+        <div class="field"><label>Category</label><input id="txn-cat" list="txn-cat-list" placeholder="e.g. Sales / Rent"/><datalist id="txn-cat-list"></datalist></div>
+        <div class="field"><label>Amount</label><input id="txn-amount" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Payment mode</label>
+          <select id="txn-payment">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank">Bank</option>
+            <option value="Cash+UPI">Cash+UPI</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="field"><label>Note</label><input id="txn-note" placeholder="optional"/></div>
+        <div class="field"><button class="btn" id="txn-add-btn">Add Entry</button></div>
+        <div class="field"><button class="btn outline" id="txn-cancel-btn" style="display:none;">Cancel</button></div>
+      </div>
+    </div>
+    <h2 class="section-title">
+      <span>Cashbook <span class="stamp" id="txn-count"></span></span>
+      <span class="stamp" style="display:flex; gap:8px;">
+        <button class="btn small outline" id="txn-download-csv">Download CSV</button>
+        <button class="btn small outline" id="txn-download-pdf">Download PDF</button>
+      </span>
+    </h2>
+    <table>
+      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Payment</th><th class="num">Amount</th><th></th></tr></thead>
+      <tbody id="txn-table-body"></tbody>
+    </table>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="view" id="view-reports">
+    <div class="report-toggle">
+      <button class="btn outline active" data-report="itemstock">Item-wise Stock Count</button>
+      <button class="btn outline" data-report="sales">Sales Report</button>
+      <button class="btn outline" data-report="purchases">Purchase Report</button>
+      <button class="btn outline" data-report="incomeexpense">Income &amp; Expense Report</button>
+    </div>
+    <div class="filters" id="report-filters" style="display:none;">
+      <div class="field"><label>Quick range</label>
+        <div style="display:flex; gap:6px;">
+          <button class="btn small outline" id="rep-preset-today">Today</button>
+          <button class="btn small outline" id="rep-preset-month">This Month</button>
+        </div>
+      </div>
+      <div class="field"><label>From</label><input id="rep-from" type="date"/></div>
+      <div class="field"><label>To</label><input id="rep-to" type="date"/></div>
+      <div class="field"><button class="btn small outline" id="rep-clear">All Time</button></div>
+    </div>
+    <div class="filters" id="item-filters" style="display:none;">
+      <div class="field" id="rep-item-cat-field"><label>Category</label>
+        <select id="rep-item-cat"><option value="">All categories</option></select>
+      </div>
+      <div class="field"><label>Item</label>
+        <select id="rep-item-search"><option value="">All items</option></select>
+      </div>
+      <div class="field" id="rep-payment-field"><label>Payment mode</label>
+        <select id="rep-payment-filter">
+          <option value="">All modes</option>
+          <option value="Cash">Cash</option>
+          <option value="UPI">UPI</option>
+          <option value="Bank">Bank</option>
+          <option value="Cash+UPI">Cash+UPI</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+    </div>
+    <h2 class="section-title">
+      <span id="report-title">Item-wise Stock Count</span>
+      <span class="stamp" style="display:flex; gap:8px;">
+        <button class="btn small outline" id="rep-download-csv">Download CSV</button>
+        <button class="btn small outline" id="rep-download-pdf">Download PDF</button>
+      </span>
+    </h2>
+    <div class="panel" id="report-body"></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="view" id="view-settings">
+    <h2 class="section-title">Business Details <span class="stamp">Shown on the header &amp; printed bills</span></h2>
+    <div class="panel">
+      <div class="form-grid" id="settings-form">
+        <div class="field"><label>Company name</label><input id="set-name" placeholder="e.g. Kavaad"/></div>
+        <div class="field"><label>Tagline / subtitle</label><input id="set-tagline" placeholder="e.g. Stock & Cashbook Ledger"/></div>
+        <div class="field"><label>Address</label><input id="set-address" placeholder="optional"/></div>
+        <div class="field"><label>Phone</label><input id="set-phone" placeholder="optional"/></div>
+        <div class="field"><label>WhatsApp number</label><input id="set-whatsapp" placeholder="e.g. 91XXXXXXXXXX (with country code)"/></div>
+        <div class="field"><button class="btn" id="settings-save-btn">Save Settings</button></div>
+      </div>
+      <div id="settings-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--green);"></div>
+      <p style="margin:10px 0 0;font-size:11.5px;color:var(--ink-soft);">The WhatsApp number is used as the default recipient when you tap "Share on WhatsApp" for a sale or purchase — leave it blank to pick a contact each time instead.</p>
+    </div>
+    <h2 class="section-title">Data</h2>
+    <div class="panel">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">Your inventory, sales, purchases, transactions, and users are stored only in this browser. Back up regularly so you never lose data.</p>
+      <button class="btn outline small" id="settings-export-btn" style="margin-right:8px;">Export All Data (JSON)</button>
+      <button class="btn outline small" id="settings-restore-btn" style="margin-right:8px;">Restore from Backup</button>
+      <button class="btn danger small" id="settings-reset-btn">Reset All Data</button>
+      <input type="file" id="settings-restore-file" accept="application/json,.json" style="display:none;"/>
+      <div id="settings-restore-msg" style="display:none;margin-top:10px;font-size:12.5px;"></div>
+    </div>
+
+    <h2 class="section-title">Google Drive Backup <span class="stamp">Auto-saves a daily JSON backup</span></h2>
+    <div class="panel">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">
+        Google only allows sign-in from a real web address, not a file opened from your computer — so this works once you host this file online (GitHub Pages, Netlify, etc. all work and are free). You'll also need your own free Google Cloud OAuth Client ID:
+      </p>
+      <ol style="font-size:12px;color:var(--ink-soft);margin:0 0 14px;padding-left:18px;line-height:1.7;">
+        <li>Go to <span style="font-family:monospace;">console.cloud.google.com</span> → create a project → enable the <strong>Google Drive API</strong>.</li>
+        <li>Go to <strong>APIs &amp; Services → Credentials → Create Credentials → OAuth client ID</strong> (type: Web application).</li>
+        <li>Under <strong>Authorized JavaScript origins</strong>, add the exact URL where this file is hosted (e.g. <span style="font-family:monospace;">https://yourname.github.io</span>).</li>
+        <li>Copy the Client ID it gives you and paste it below.</li>
+      </ol>
+      <div class="form-grid">
+        <div class="field" style="grid-column: span 2;"><label>Google OAuth Client ID</label><input id="gd-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com"/></div>
+        <div class="field"><label>Auto-backup daily</label>
+          <select id="gd-auto-toggle">
+            <option value="on">On — back up once a day when opened</option>
+            <option value="off">Off — manual only</option>
+          </select>
+        </div>
+        <div class="field"><button class="btn" id="gd-connect-btn">Connect Google Drive</button></div>
+        <div class="field"><button class="btn outline" id="gd-backup-now-btn">Backup Now</button></div>
+        <div class="field"><button class="btn outline" id="gd-disconnect-btn" style="display:none;">Disconnect</button></div>
+      </div>
+      <div id="gd-status" style="margin-top:12px;font-size:12.5px;color:var(--ink-soft);">Not connected yet.</div>
+      <div id="gd-msg" style="display:none;margin-top:8px;font-size:12.5px;"></div>
+    </div>
+
+    <h2 class="section-title">Users &amp; Access <span class="stamp">Only visible to Admin</span></h2>
+    <div class="panel">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;">You are signed in as <strong>Admin</strong> with full access — only Admin can edit or delete records, everyone else can only view and add. Choose exactly which tabs each user is allowed to see below.</p>
+      <table style="margin-bottom:16px;">
+        <thead><tr><th>Name</th><th>Username</th><th>Access</th><th></th></tr></thead>
+        <tbody id="users-table-body"></tbody>
+      </table>
+      <div class="form-grid" style="margin-bottom:10px;">
+        <div class="field"><label>Name</label><input id="user-name" placeholder="e.g. Ramesh"/></div>
+        <div class="field"><label>Username</label><input id="user-username" placeholder="e.g. ramesh"/></div>
+        <div class="field"><label>Password</label><input id="user-password" type="password" placeholder="required, min 4 chars"/></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px;">Allowed tabs</label>
+        <div id="user-permissions" style="display:flex; flex-wrap:wrap; gap:12px; font-size:13px;"></div>
+      </div>
+      <button class="btn" id="user-add-btn">Add User</button>
+      <div id="user-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--red);"></div>
+    </div>
+  </div>
+
+  </div>
+  </div>
+
+</div>
+
+<iframe id="print-frame" style="position:fixed; right:-9999px; bottom:-9999px; width:1px; height:1px; border:0;"></iframe>
+
+<script>
+(function(){
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const fmt = n => (isNaN(n)?0:n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+  let items = [];
+  let txns = [];
+  const defaultSettings = { companyName:'Kavaad', tagline:'Stock & Cashbook Ledger', address:'', phone:'', whatsapp:'', googleClientId:'', autoBackupEnabled:true };
+  let settings = { ...defaultSettings };
+
+  const ALL_TABS = ['dashboard','inventory','purchases','sales','transactions','reports'];
+  const TAB_LABELS = { dashboard:'Dashboard', inventory:'Inventory', purchases:'Purchases', sales:'Sales', transactions:'Income & Expense', reports:'Reports' };
+  let users = [];
+  let currentUser = null;
+  let pendingLoginUser = null;
+
+  $('#today-date').textContent = new Date().toLocaleDateString('en-IN', {weekday:'short', year:'numeric', month:'short', day:'numeric'});
+  $('#txn-date').value = new Date().toISOString().slice(0,10);
+
+  function loadSettings(){
+    try{
+      const raw = localStorage.getItem('kavaad_settings');
+      settings = raw ? { ...defaultSettings, ...JSON.parse(raw) } : { ...defaultSettings };
+    }catch(e){ settings = { ...defaultSettings }; }
+    applySettingsToUI();
+  }
+  function saveSettingsToStorage(){
+    try{ localStorage.setItem('kavaad_settings', JSON.stringify(settings)); }catch(e){ console.error(e); }
+  }
+  function applySettingsToUI(){
+    $('#brand-name').textContent = settings.companyName || 'Kavaad';
+    $('#brand-sub').textContent = settings.tagline || 'Stock & Cashbook Ledger';
+    $('#set-name').value = settings.companyName || '';
+    $('#set-tagline').value = settings.tagline || '';
+    $('#set-address').value = settings.address || '';
+    $('#set-phone').value = settings.phone || '';
+    $('#set-whatsapp').value = settings.whatsapp || '';
+    $('#gd-client-id').value = settings.googleClientId || '';
+    $('#gd-auto-toggle').value = settings.autoBackupEnabled === false ? 'off' : 'on';
+  }
+
+  async function loadAll(){
+    try{
+      const raw = localStorage.getItem('kavaad_items');
+      items = raw ? JSON.parse(raw) : [];
+    }catch(e){ items = []; }
+    try{
+      const raw = localStorage.getItem('kavaad_txns');
+      txns = raw ? JSON.parse(raw) : [];
+    }catch(e){ txns = []; }
+    loadSettings();
+    loadUsers();
+    renderUserPermissionCheckboxes();
+    renderUsersTable();
+    renderAll();
+    initAuth();
+  }
+  async function saveItems(){
+    try{ localStorage.setItem('kavaad_items', JSON.stringify(items)); }catch(e){ console.error(e); }
+  }
+  async function saveTxns(){
+    try{ localStorage.setItem('kavaad_txns', JSON.stringify(txns)); }catch(e){ console.error(e); }
+  }
+
+  // ---------- Users & Access ----------
+  function loadUsers(){
+    try{
+      const raw = localStorage.getItem('kavaad_users');
+      users = raw ? JSON.parse(raw) : [];
+    }catch(e){ users = []; }
+    if(!users.some(u=>u.isAdmin)){
+      users.unshift({ id:'admin', name:'Admin', username:'admin', password:'', isAdmin:true, permissions:[...ALL_TABS] });
+      saveUsers();
+    }
+  }
+  function saveUsers(){
+    try{ localStorage.setItem('kavaad_users', JSON.stringify(users)); }catch(e){ console.error(e); }
+  }
+
+  function initAuth(){
+    const savedId = localStorage.getItem('kavaad_current_user_id');
+    const saved = savedId ? users.find(u=>u.id===savedId) : null;
+    if(saved && saved.password){
+      currentUser = saved;
+      enterApp();
+      return;
+    }
+    showLoginScreen();
+  }
+
+  function showLoginScreen(){
+    $('#ledger-root').style.display = 'none';
+    $('#login-screen').style.display = 'flex';
+    $('#login-brand').textContent = settings.companyName || 'Kavaad';
+    $('#login-subtitle').textContent = 'Select a user to continue';
+    pendingLoginUser = null;
+    $('#login-password-area').style.display = 'none';
+    $('#login-setup-area').style.display = 'none';
+    $('#login-password-input').value = '';
+    $('#login-error').style.display = 'none';
+    $('#login-user-list').style.display = 'flex';
+    $('#login-user-list').innerHTML = users.map(u=>
+      `<button class="btn outline" data-loginuser="${u.id}" style="text-align:left;">${esc(u.name)}${u.isAdmin?' (Admin)':''}</button>`
+    ).join('');
+    $$('button[data-loginuser]', $('#login-user-list')).forEach(b=>b.addEventListener('click', ()=>selectLoginUser(b.dataset.loginuser)));
+  }
+
+  function selectLoginUser(id){
+    const u = users.find(x=>x.id===id);
+    if(!u) return;
+    pendingLoginUser = u;
+    $('#login-user-list').style.display = 'none';
+    if(!u.password){
+      $('#login-password-area').style.display = 'none';
+      $('#login-setup-area').style.display = 'block';
+      $('#login-subtitle').textContent = `Welcome, ${u.name}`;
+      $('#login-setup-password').value = '';
+      $('#login-setup-password-confirm').value = '';
+      $('#login-setup-error').style.display = 'none';
+      $('#login-setup-password').focus();
+      return;
+    }
+    $('#login-setup-area').style.display = 'none';
+    $('#login-password-area').style.display = 'block';
+    $('#login-subtitle').textContent = `Welcome, ${u.name}`;
+    $('#login-error').style.display = 'none';
+    $('#login-password-input').value = '';
+    $('#login-password-input').focus();
+  }
+
+  $('#login-back-btn').addEventListener('click', showLoginScreen);
+
+  $('#login-submit-btn').addEventListener('click', ()=>{
+    if(!pendingLoginUser) return;
+    if($('#login-password-input').value === pendingLoginUser.password){
+      completeLogin(pendingLoginUser);
+    } else {
+      $('#login-error').textContent = 'Incorrect password.';
+      $('#login-error').style.display = 'block';
+    }
+  });
+  $('#login-password-input').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#login-submit-btn').click(); });
+
+  $('#login-setup-submit-btn').addEventListener('click', ()=>{
+    if(!pendingLoginUser) return;
+    const pw = $('#login-setup-password').value;
+    const confirm = $('#login-setup-password-confirm').value;
+    if(!pw || pw.length < 4){
+      $('#login-setup-error').textContent = 'Password must be at least 4 characters.';
+      $('#login-setup-error').style.display = 'block';
+      return;
+    }
+    if(pw !== confirm){
+      $('#login-setup-error').textContent = 'Passwords do not match.';
+      $('#login-setup-error').style.display = 'block';
+      return;
+    }
+    pendingLoginUser.password = pw;
+    saveUsers();
+    renderUsersTable();
+    completeLogin(pendingLoginUser);
+  });
+  $('#login-setup-password-confirm').addEventListener('keydown', (e)=>{ if(e.key==='Enter') $('#login-setup-submit-btn').click(); });
+
+  function completeLogin(u){
+    currentUser = u;
+    localStorage.setItem('kavaad_current_user_id', u.id);
+    enterApp();
+  }
+
+  function enterApp(){
+    $('#login-screen').style.display = 'none';
+    $('#ledger-root').style.display = 'block';
+    $('#current-user-name').textContent = currentUser.name + (currentUser.isAdmin ? ' (Admin)' : '');
+    applyUserPermissionsToUI();
+  }
+
+  function doLogout(){
+    localStorage.removeItem('kavaad_current_user_id');
+    currentUser = null;
+    showLoginScreen();
+  }
+  $('#switch-user-link').addEventListener('click', doLogout);
+  $('#logout-link').addEventListener('click', ()=>{
+    if(confirm('Log out now?')) doLogout();
+  });
+
+  function isAdmin(){
+    return !!(currentUser && currentUser.isAdmin);
+  }
+
+  function userCanAccess(viewName){
+    if(!currentUser) return false;
+    if(currentUser.isAdmin) return true;
+    if(viewName==='settings') return false;
+    return (currentUser.permissions||[]).includes(viewName);
+  }
+
+  function applyUserPermissionsToUI(){
+    $$('.tab').forEach(t=>{
+      const allowed = userCanAccess(t.dataset.view);
+      t.style.display = allowed ? '' : 'none';
+    });
+    // If current view isn't allowed, jump to the first allowed tab
+    const activeTab = $('.tab.active');
+    if(!activeTab || activeTab.style.display==='none'){
+      const firstAllowed = ALL_TABS.find(v=>userCanAccess(v)) || 'dashboard';
+      switchTab(firstAllowed);
+    }
+    renderAll();
+  }
+
+  function renderUserPermissionCheckboxes(){
+    $('#user-permissions').innerHTML = ALL_TABS.map(v=>
+      `<label style="display:flex; align-items:center; gap:5px; cursor:pointer;">
+        <input type="checkbox" class="user-perm-checkbox" value="${v}"/> ${esc(TAB_LABELS[v])}
+      </label>`
+    ).join('');
+  }
+
+  function showUserMsg(text){
+    const el = $('#user-msg');
+    el.textContent = text;
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function renderUsersTable(){
+    const tb = $('#users-table-body');
+    if(users.length===0){ tb.innerHTML = `<tr class="empty-row"><td colspan="4">No users yet.</td></tr>`; return; }
+    tb.innerHTML = users.map(u=>{
+      const access = u.isAdmin ? 'Full access (Admin)' : ((u.permissions||[]).map(p=>TAB_LABELS[p]).join(', ') || 'No tabs assigned') + ' — view &amp; add only';
+      return `<tr>
+        <td>${esc(u.name)}</td>
+        <td>${esc(u.username)}</td>
+        <td style="font-size:12px;">${access}</td>
+        <td>${u.isAdmin ? '' : `<button class="btn danger small" data-deluser="${u.id}">Remove</button>`}</td>
+      </tr>`;
+    }).join('');
+    $$('button[data-deluser]', tb).forEach(b=>b.addEventListener('click', ()=>{
+      if(!confirm('Remove this user? They will no longer be able to sign in.')) return;
+      users = users.filter(u=>u.id!==b.dataset.deluser);
+      saveUsers();
+      renderUsersTable();
+    }));
+  }
+
+  $('#user-add-btn').addEventListener('click', ()=>{
+    const name = $('#user-name').value.trim();
+    const username = $('#user-username').value.trim();
+    const password = $('#user-password').value;
+    const permissions = $$('.user-perm-checkbox').filter(c=>c.checked).map(c=>c.value);
+    if(!name || !username){ showUserMsg('Enter a name and username.'); return; }
+    if(!password || password.length < 4){ showUserMsg('Enter a password of at least 4 characters.'); return; }
+    if(users.some(u=>u.username.toLowerCase()===username.toLowerCase())){ showUserMsg('That username is already taken.'); return; }
+    users.push({ id: 'u_'+Date.now()+Math.random().toString(36).slice(2), name, username, password, isAdmin:false, permissions });
+    saveUsers();
+    $('#user-name').value=''; $('#user-username').value=''; $('#user-password').value='';
+    $$('.user-perm-checkbox').forEach(c=>c.checked=false);
+    showUserMsg('');
+    renderUsersTable();
+  });
+
+  // ---------- Settings ----------
+  function showSettingsMsg(text){
+    const el = $('#settings-msg');
+    el.textContent = text;
+    el.style.display = text ? 'block' : 'none';
+  }
+  $('#settings-save-btn').addEventListener('click', ()=>{
+    settings = {
+      ...settings,
+      companyName: $('#set-name').value.trim() || 'Kavaad',
+      tagline: $('#set-tagline').value.trim() || 'Stock & Cashbook Ledger',
+      address: $('#set-address').value.trim(),
+      phone: $('#set-phone').value.trim(),
+      whatsapp: $('#set-whatsapp').value.trim().replace(/[^\d]/g,'')
+    };
+    saveSettingsToStorage();
+    applySettingsToUI();
+    showSettingsMsg('Settings saved.');
+    setTimeout(()=>showSettingsMsg(''), 2500);
+  });
+  $('#settings-export-btn').addEventListener('click', ()=>{
+    const data = { items, txns, settings, users, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const namePart = (settings.companyName||'Kavaad').replace(/[^a-zA-Z0-9]+/g,'_');
+    a.href = url; a.download = `${namePart}_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  function showRestoreMsg(text, isError){
+    const el = $('#settings-restore-msg');
+    el.textContent = text;
+    el.style.color = isError ? 'var(--red)' : 'var(--green)';
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  $('#settings-restore-btn').addEventListener('click', ()=>{
+    if(!isAdmin()) return;
+    $('#settings-restore-file').click();
+  });
+
+  $('#settings-restore-file').addEventListener('change', (e)=>{
+    if(!isAdmin()) return;
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async ()=>{
+      let data;
+      try{ data = JSON.parse(reader.result); }
+      catch(err){ showRestoreMsg('That file is not valid JSON.', true); e.target.value=''; return; }
+      if(!Array.isArray(data.items) || !Array.isArray(data.txns)){
+        showRestoreMsg('That file does not look like a Kavaad backup.', true);
+        e.target.value = '';
+        return;
+      }
+      const includesUsers = Array.isArray(data.users) && data.users.some(u=>u.isAdmin);
+      const warning = `This will REPLACE all current items, sales, purchases and transactions${includesUsers ? ', and all users/passwords,' : ''} with the contents of this backup file. This cannot be undone. Continue?`;
+      if(!confirm(warning)){ e.target.value=''; return; }
+      try{
+        localStorage.setItem('kavaad_items', JSON.stringify(data.items));
+        localStorage.setItem('kavaad_txns', JSON.stringify(data.txns));
+        if(data.settings && typeof data.settings==='object'){
+          localStorage.setItem('kavaad_settings', JSON.stringify({ ...defaultSettings, ...data.settings }));
+        }
+        if(includesUsers){
+          localStorage.setItem('kavaad_users', JSON.stringify(data.users));
+        }
+        showRestoreMsg('Restore complete. Reloading…');
+        setTimeout(()=>{ location.reload(); }, 800);
+      }catch(err){
+        showRestoreMsg('Restore failed: ' + err.message, true);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  $('#settings-reset-btn').addEventListener('click', async ()=>{
+    if(!isAdmin()) return;
+    if(!confirm('This will permanently delete all items, sales, purchases, and transactions in this browser. Continue?')) return;
+    items = []; txns = [];
+    await saveItems(); await saveTxns();
+    renderAll();
+    showSettingsMsg('All data has been reset.');
+    setTimeout(()=>showSettingsMsg(''), 2500);
+  });
+
+  // ---------- Google Drive daily backup ----------
+  let gdTokenClient = null;
+  let gdAccessToken = null;
+  let gdGisLoaded = false;
+
+  function gdShowMsg(text, isError){
+    const el = $('#gd-msg');
+    el.textContent = text;
+    el.style.color = isError ? 'var(--red)' : 'var(--green)';
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function gdSetStatus(){
+    const last = localStorage.getItem('kavaad_gd_last_backup');
+    const lastText = last ? `Last backup: ${new Date(last).toLocaleString('en-IN')}` : 'No backup yet.';
+    if(gdAccessToken){
+      $('#gd-status').textContent = `Connected. ${lastText}`;
+      $('#gd-connect-btn').textContent = 'Reconnect';
+      $('#gd-disconnect-btn').style.display = 'inline-block';
+    } else {
+      $('#gd-status').textContent = `Not connected. ${lastText}`;
+      $('#gd-connect-btn').textContent = 'Connect Google Drive';
+      $('#gd-disconnect-btn').style.display = 'none';
+    }
+  }
+
+  function gdLoadGisScript(){
+    return new Promise((resolve, reject)=>{
+      if(gdGisLoaded && window.google && window.google.accounts){ resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.onload = ()=>{ gdGisLoaded = true; resolve(); };
+      s.onerror = ()=> reject(new Error('Could not load Google Sign-In. Check your internet connection.'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function gdRequestToken(interactive){
+    return new Promise((resolve, reject)=>{
+      const clientId = settings.googleClientId;
+      if(!clientId){ reject(new Error('Add your Google OAuth Client ID first.')); return; }
+      try{
+        gdTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: clientId,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          callback: (resp)=>{
+            if(resp && resp.access_token){ gdAccessToken = resp.access_token; resolve(resp.access_token); }
+            else reject(new Error('Google did not return access.'));
+          },
+          error_callback: (err)=>{ reject(new Error((err && err.type) || 'Google sign-in was cancelled or blocked.')); }
+        });
+        gdTokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+      }catch(e){ reject(e); }
+    });
+  }
+
+  async function gdConnect(){
+    gdShowMsg('');
+    try{
+      await gdLoadGisScript();
+      await gdRequestToken(true);
+      gdSetStatus();
+      gdShowMsg('Connected to Google Drive.');
+      await gdBackupNow(true);
+    }catch(e){
+      gdShowMsg(e.message || 'Could not connect to Google Drive.', true);
+    }
+  }
+
+  function gdDisconnect(){
+    if(gdAccessToken && window.google && google.accounts && google.accounts.oauth2){
+      try{ google.accounts.oauth2.revoke(gdAccessToken, ()=>{}); }catch(e){}
+    }
+    gdAccessToken = null;
+    gdSetStatus();
+    gdShowMsg('Disconnected.');
+  }
+
+  async function gdUploadBackup(token){
+    const data = { items, txns, settings: { ...settings, googleClientId: undefined }, exportedAt: new Date().toISOString() };
+    const filename = `${(settings.companyName||'Kavaad').replace(/[^a-zA-Z0-9]+/g,'_')}_Backup_${new Date().toISOString().slice(0,10)}.json`;
+    const boundary = 'kavaad_boundary_' + Date.now();
+    const metadata = { name: filename, mimeType: 'application/json' };
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(data, null, 2)}\r\n` +
+      `--${boundary}--`;
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body
+    });
+    if(!res.ok){
+      const errText = await res.text().catch(()=> '');
+      throw new Error(`Google Drive upload failed (${res.status}). ${errText.slice(0,150)}`);
+    }
+    return true;
+  }
+
+  async function gdBackupNow(silent){
+    if(!silent) gdShowMsg('');
+    try{
+      if(!gdAccessToken){
+        await gdLoadGisScript();
+        await gdRequestToken(true);
+      }
+      await gdUploadBackup(gdAccessToken);
+      localStorage.setItem('kavaad_gd_last_backup', new Date().toISOString());
+      localStorage.setItem('kavaad_gd_last_backup_date', new Date().toISOString().slice(0,10));
+      gdSetStatus();
+      gdShowMsg('Backup uploaded to Google Drive.');
+    }catch(e){
+      gdShowMsg(e.message || 'Backup failed.', true);
+    }
+  }
+
+  async function gdCheckAutoBackupOnLoad(){
+    if(settings.autoBackupEnabled === false) return;
+    if(!settings.googleClientId) return;
+    const todayStr = new Date().toISOString().slice(0,10);
+    const lastDate = localStorage.getItem('kavaad_gd_last_backup_date');
+    if(lastDate === todayStr) return;
+    try{
+      await gdLoadGisScript();
+      await gdRequestToken(false);
+      await gdBackupNow(true);
+    }catch(e){
+      gdShowMsg('Daily backup needs you to reconnect Google Drive.', true);
+    }
+  }
+
+  $('#gd-connect-btn').addEventListener('click', gdConnect);
+  $('#gd-disconnect-btn').addEventListener('click', gdDisconnect);
+  $('#gd-backup-now-btn').addEventListener('click', ()=>gdBackupNow(false));
+  $('#gd-client-id').addEventListener('change', ()=>{
+    settings.googleClientId = $('#gd-client-id').value.trim();
+    saveSettingsToStorage();
+  });
+  $('#gd-auto-toggle').addEventListener('change', ()=>{
+    settings.autoBackupEnabled = $('#gd-auto-toggle').value === 'on';
+    saveSettingsToStorage();
+  });
+  gdSetStatus();
+
+  // ---------- Tabs ----------
+  $$('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.view)));
+
+  // ---------- Inventory ----------
+  function categoriesOf(list, key){
+    return [...new Set(list.map(x=>x[key]).filter(Boolean))];
+  }
+  function refreshDatalists(){
+    $('#inv-cat-list').innerHTML = categoriesOf(items,'category').map(c=>`<option value="${esc(c)}">`).join('');
+    $('#txn-cat-list').innerHTML = categoriesOf(txns,'category').map(c=>`<option value="${esc(c)}">`).join('');
+  }
+  function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  let editingItemId = null;
+
+  function resetInvForm(){
+    ['inv-name','inv-cat','inv-qty','inv-unit','inv-cost','inv-sell','inv-reorder'].forEach(id=>$('#'+id).value='');
+    editingItemId = null;
+    $('#inv-add-btn').textContent = 'Add Item';
+    $('#inv-form-title').textContent = 'Add Stock Item';
+    $('#inv-cancel-btn').style.display = 'none';
+  }
+
+  function startEditItem(id){
+    if(!isAdmin()) return;
+    const i = items.find(x=>x.id===id);
+    if(!i) return;
+    $('#inv-name').value = i.name;
+    $('#inv-cat').value = i.category;
+    $('#inv-qty').value = i.qty;
+    $('#inv-unit').value = i.unit;
+    $('#inv-cost').value = i.cost;
+    $('#inv-sell').value = i.sell;
+    $('#inv-reorder').value = i.reorder;
+    editingItemId = id;
+    $('#inv-add-btn').textContent = 'Update Item';
+    $('#inv-form-title').textContent = 'Edit Stock Item';
+    $('#inv-cancel-btn').style.display = 'inline-block';
+    $('#inv-name').focus();
+  }
+
+  $('#inv-cancel-btn').addEventListener('click', resetInvForm);
+
+  $('#inv-add-btn').addEventListener('click', async ()=>{
+    const name = $('#inv-name').value.trim();
+    const category = $('#inv-cat').value.trim() || 'Uncategorized';
+    const qty = parseFloat($('#inv-qty').value)||0;
+    const unit = $('#inv-unit').value.trim() || 'pcs';
+    const cost = parseFloat($('#inv-cost').value)||0;
+    const sell = parseFloat($('#inv-sell').value)||0;
+    const reorder = parseFloat($('#inv-reorder').value)||0;
+    if(!name){ $('#inv-name').focus(); return; }
+    if(editingItemId){
+      const i = items.find(x=>x.id===editingItemId);
+      if(i){ Object.assign(i, {name, category, qty, unit, cost, sell, reorder}); }
+    } else {
+      items.push({id: Date.now()+Math.random(), name, category, qty, unit, cost, sell, reorder});
+    }
+    await saveItems();
+    resetInvForm();
+    renderAll();
+  });
+
+  async function deleteItem(id){
+    if(!isAdmin()) return;
+    items = items.filter(i=>i.id!==id);
+    await saveItems();
+    if(editingItemId===id) resetInvForm();
+    renderAll();
+  }
+
+  function renderInventory(){
+    const tb = $('#inv-table-body');
+    if(items.length===0){
+      tb.innerHTML = `<tr class="empty-row"><td colspan="8">No stock items yet — add your first item above.</td></tr>`;
+    } else {
+      tb.innerHTML = items.map(i=>{
+        const val = (i.qty*i.cost);
+        return `<tr>
+          <td>${esc(i.name)}</td>
+          <td><span class="tag">${esc(i.category)}</span></td>
+          <td class="num">${i.qty}</td>
+          <td>${esc(i.unit)}</td>
+          <td class="num">${fmt(i.cost)}</td>
+          <td class="num">${fmt(i.sell)}</td>
+          <td class="num">${fmt(val)}</td>
+          <td>
+            <button class="btn small outline" data-buy="${i.id}">Purchase</button>
+            <button class="btn small outline" data-sell="${i.id}">Sell</button>
+            ${isAdmin() ? `<button class="btn small outline" data-edit="${i.id}">Edit</button>
+            <button class="btn danger small" data-del="${i.id}">Remove</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+      $$('button[data-del]', tb).forEach(b=>b.addEventListener('click', ()=>deleteItem(parseFloat(b.dataset.del))));
+      $$('button[data-edit]', tb).forEach(b=>b.addEventListener('click', ()=>startEditItem(parseFloat(b.dataset.edit))));
+      $$('button[data-sell]', tb).forEach(b=>b.addEventListener('click', ()=>quickSell(parseFloat(b.dataset.sell))));
+      $$('button[data-buy]', tb).forEach(b=>b.addEventListener('click', ()=>quickPurchase(parseFloat(b.dataset.buy))));
+    }
+    $('#inv-count').textContent = items.length + ' item' + (items.length===1?'':'s');
+    populateSaleItemSelect();
+    populatePurchaseItemSelect();
+  }
+
+  // ---------- Tab switching helper ----------
+  function switchTab(viewName){
+    if(currentUser && !userCanAccess(viewName)) return;
+    $$('.tab').forEach(x=>x.classList.toggle('active', x.dataset.view===viewName));
+    $$('.view').forEach(x=>x.classList.toggle('active', x.id==='view-'+viewName));
+    if(viewName==='reports'){
+      updateReportFilterVisibility();
+      if(currentReport==='itemstock') populateItemCatFilter();
+      if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') populateItemSearchSelect();
+      renderReport();
+    }
+  }
+
+  // ---------- Sell Stock ----------
+  if(!$('#sale-date').value) $('#sale-date').value = new Date().toISOString().slice(0,10);
+  let editingSaleId = null;
+
+  function populateSaleItemSelect(){
+    const sel = $('#sale-item');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select item...</option>' +
+      items.map(i=>`<option value="${i.id}">${esc(i.name)} (${i.qty} ${esc(i.unit)} in stock)</option>`).join('');
+    if(items.some(i=>String(i.id)===current)) sel.value = current;
+    updateSaleAvailable();
+  }
+
+  function updateSaleAvailable(){
+    const id = $('#sale-item').value;
+    const item = items.find(i=>String(i.id)===String(id));
+    if(item){
+      $('#sale-available').value = `${item.qty} ${item.unit}`;
+      if(!$('#sale-price').value) $('#sale-price').value = item.sell;
+    } else {
+      $('#sale-available').value = '';
+    }
+  }
+  $('#sale-item').addEventListener('change', ()=>{ $('#sale-price').value=''; updateSaleAvailable(); });
+
+  function showSaleMsg(text){
+    const el = $('#sale-msg');
+    el.textContent = text;
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function resetSaleForm(){
+    $('#sale-item').value = '';
+    $('#sale-qty').value = '';
+    $('#sale-price').value = '';
+    $('#sale-note').value = '';
+    $('#sale-available').value = '';
+    $('#sale-payment').value = 'Cash';
+    $('#sale-customer-name').value = '';
+    $('#sale-customer-mobile').value = '';
+    editingSaleId = null;
+    $('#sale-btn').textContent = 'Record Sale';
+    $('#sale-form-title').firstChild.textContent = 'Sell Stock ';
+    $('#sale-cancel-btn').style.display = 'none';
+    showSaleMsg('');
+  }
+
+  async function recordSale(itemId, qty, price, date, note, paymentMode, customerName, customerMobile){
+    const item = items.find(i=>i.id===itemId);
+    if(!item){ showSaleMsg('Please choose an item.'); return false; }
+    if(!qty || qty<=0){ showSaleMsg('Enter a quantity greater than zero.'); return false; }
+    if(qty>item.qty){ showSaleMsg(`Only ${item.qty} ${item.unit} of "${item.name}" in stock.`); return false; }
+    item.qty -= qty;
+    await saveItems();
+    txns.push({
+      id: Date.now()+Math.random(),
+      type: 'income',
+      source: 'sale',
+      itemId: item.id,
+      itemName: item.name,
+      qty, unit: item.unit, pricePerUnit: price,
+      date: date || new Date().toISOString().slice(0,10),
+      category: 'Sales',
+      amount: qty*price,
+      paymentMode: paymentMode || 'Cash',
+      customerName: customerName || '',
+      customerMobile: customerMobile || '',
+      note: note || `Sold ${qty} ${item.unit} x ${item.name}`
+    });
+    await saveTxns();
+    return true;
+  }
+
+  async function updateSale(txnId, newItemId, newQty, newPrice, newDate, newNote, newPaymentMode, customerName, customerMobile){
+    const t = txns.find(x=>x.id===txnId);
+    if(!t){ showSaleMsg('Could not find that sale.'); return false; }
+    const oldItem = items.find(i=>i.id===t.itemId);
+    const newItem = items.find(i=>i.id===newItemId);
+    if(!newItem){ showSaleMsg('Please choose an item.'); return false; }
+    if(!newQty || newQty<=0){ showSaleMsg('Enter a quantity greater than zero.'); return false; }
+    let available = newItem.qty;
+    if(oldItem && oldItem.id===newItem.id) available += (t.qty||0);
+    if(newQty > available){ showSaleMsg(`Only ${available} ${newItem.unit} of "${newItem.name}" available.`); return false; }
+    if(oldItem && oldItem.id !== newItem.id){
+      oldItem.qty += (t.qty||0);
+      newItem.qty -= newQty;
+    } else {
+      newItem.qty = newItem.qty + (t.qty||0) - newQty;
+    }
+    await saveItems();
+    Object.assign(t, {
+      itemId: newItem.id, itemName: newItem.name, qty: newQty, unit: newItem.unit,
+      pricePerUnit: newPrice, date: newDate || t.date, note: newNote,
+      paymentMode: newPaymentMode, amount: newQty*newPrice, source:'sale', type:'income', category:'Sales',
+      customerName: customerName || '', customerMobile: customerMobile || ''
+    });
+    await saveTxns();
+    return true;
+  }
+
+  $('#sale-btn').addEventListener('click', async ()=>{
+    const id = $('#sale-item').value;
+    const item = items.find(i=>String(i.id)===String(id));
+    const qty = parseFloat($('#sale-qty').value)||0;
+    const price = parseFloat($('#sale-price').value)||0;
+    const date = $('#sale-date').value;
+    const note = $('#sale-note').value.trim();
+    const paymentMode = $('#sale-payment').value;
+    const customerName = $('#sale-customer-name').value.trim();
+    const customerMobile = $('#sale-customer-mobile').value.trim();
+    if(!item){ showSaleMsg('Please choose an item.'); return; }
+    const ok = editingSaleId
+      ? await updateSale(editingSaleId, item.id, qty, price, date, note, paymentMode, customerName, customerMobile)
+      : await recordSale(item.id, qty, price, date, note, paymentMode, customerName, customerMobile);
+    if(ok){ resetSaleForm(); renderAll(); }
+  });
+  $('#sale-cancel-btn').addEventListener('click', resetSaleForm);
+
+  function quickSell(itemId){
+    switchTab('sales');
+    resetSaleForm();
+    $('#sale-item').value = itemId;
+    updateSaleAvailable();
+    $('#sale-qty').focus();
+  }
+
+  function startEditSale(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(!t) return;
+    switchTab('sales');
+    populateSaleItemSelect();
+    $('#sale-item').value = t.itemId;
+    updateSaleAvailable();
+    $('#sale-available').value = (()=>{ const it = items.find(i=>i.id===t.itemId); return it ? `${it.qty + (t.qty||0)} ${it.unit}` : ''; })();
+    $('#sale-qty').value = t.qty!=null ? t.qty : '';
+    $('#sale-price').value = t.pricePerUnit!=null ? t.pricePerUnit : '';
+    $('#sale-date').value = t.date;
+    $('#sale-note').value = t.note && !/^Sold /.test(t.note) ? t.note : '';
+    $('#sale-payment').value = t.paymentMode || 'Cash';
+    $('#sale-customer-name').value = t.customerName || '';
+    $('#sale-customer-mobile').value = t.customerMobile || '';
+    editingSaleId = id;
+    $('#sale-btn').textContent = 'Update Sale';
+    $('#sale-form-title').firstChild.textContent = 'Edit Sale ';
+    $('#sale-cancel-btn').style.display = 'inline-block';
+    showSaleMsg('');
+    $('#sale-qty').focus();
+  }
+
+  async function deleteSale(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(t){
+      const item = items.find(i=>i.id===t.itemId);
+      if(item){ item.qty += (t.qty||0); await saveItems(); }
+    }
+    txns = txns.filter(x=>x.id!==id);
+    await saveTxns();
+    if(editingSaleId===id) resetSaleForm();
+    renderAll();
+  }
+
+  function renderSalesHistory(){
+    const tb = $('#sale-table-body');
+    const sales = txns.filter(t=>t.source==='sale' || (!t.source && t.category==='Sales' && t.type==='income'))
+      .sort((a,b)=>b.date.localeCompare(a.date));
+    if(sales.length===0){
+      tb.innerHTML = `<tr class="empty-row"><td colspan="9">No sales recorded yet — use the form above.</td></tr>`;
+    } else {
+      tb.innerHTML = sales.map(t=>`<tr>
+        <td>${t.date}</td>
+        <td>${esc(t.itemName || t.category)}</td>
+        <td class="num">${t.qty!=null ? t.qty : '—'}</td>
+        <td class="num">${t.pricePerUnit!=null ? fmt(t.pricePerUnit) : '—'}</td>
+        <td class="num type-income">${fmt(t.amount)}</td>
+        <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
+        <td>${t.customerName ? esc(t.customerName) : '—'}${t.customerMobile ? '<br><span style="font-size:11px;color:var(--ink-soft);">'+esc(t.customerMobile)+'</span>' : ''}</td>
+        <td>${esc(t.note||'—')}</td>
+        <td>
+          ${isAdmin() ? `<button class="btn small outline" data-editsale="${t.id}">Edit</button>` : ''}
+          <button class="btn small outline" data-printsale="${t.id}">Print</button>
+          <button class="btn small outline" data-wasale="${t.id}">WhatsApp</button>
+          ${isAdmin() ? `<button class="btn danger small" data-delsale="${t.id}">Remove</button>` : ''}
+        </td>
+      </tr>`).join('');
+      $$('button[data-delsale]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        if(confirm('Remove this sale and add the quantity back to stock?')) deleteSale(parseFloat(b.dataset.delsale));
+      }));
+      $$('button[data-editsale]', tb).forEach(b=>b.addEventListener('click', ()=>startEditSale(parseFloat(b.dataset.editsale))));
+      $$('button[data-printsale]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        const t = txns.find(x=>x.id===parseFloat(b.dataset.printsale));
+        if(t) printBill(t, 'sale');
+      }));
+      $$('button[data-wasale]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        const t = txns.find(x=>x.id===parseFloat(b.dataset.wasale));
+        if(t) shareOnWhatsApp(t, 'sale');
+      }));
+    }
+    $('#sale-count').textContent = sales.length + ' sale' + (sales.length===1?'':'s');
+  }
+
+  // ---------- Purchase Stock ----------
+  if(!$('#purchase-date').value) $('#purchase-date').value = new Date().toISOString().slice(0,10);
+  let editingPurchaseId = null;
+
+  function populatePurchaseItemSelect(){
+    const sel = $('#purchase-item');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select item...</option>' +
+      items.map(i=>`<option value="${i.id}">${esc(i.name)} (${i.qty} ${esc(i.unit)} in stock)</option>`).join('');
+    if(items.some(i=>String(i.id)===current)) sel.value = current;
+    updatePurchaseAvailable();
+  }
+
+  function updatePurchaseAvailable(){
+    const id = $('#purchase-item').value;
+    const item = items.find(i=>String(i.id)===String(id));
+    if(item){
+      $('#purchase-available').value = `${item.qty} ${item.unit}`;
+      if(!$('#purchase-price').value) $('#purchase-price').value = item.cost;
+    } else {
+      $('#purchase-available').value = '';
+    }
+  }
+  $('#purchase-item').addEventListener('change', ()=>{ $('#purchase-price').value=''; updatePurchaseAvailable(); });
+
+  function showPurchaseMsg(text){
+    const el = $('#purchase-msg');
+    el.textContent = text;
+    el.style.display = text ? 'block' : 'none';
+  }
+
+  function resetPurchaseForm(){
+    $('#purchase-item').value = '';
+    $('#purchase-qty').value = '';
+    $('#purchase-price').value = '';
+    $('#purchase-note').value = '';
+    $('#purchase-available').value = '';
+    $('#purchase-payment').value = 'Cash';
+    editingPurchaseId = null;
+    $('#purchase-btn').textContent = 'Record Purchase';
+    $('#purchase-form-title').firstChild.textContent = 'Purchase Stock ';
+    $('#purchase-cancel-btn').style.display = 'none';
+    showPurchaseMsg('');
+  }
+
+  async function recordPurchase(itemId, qty, price, date, note, paymentMode){
+    const item = items.find(i=>i.id===itemId);
+    if(!item){ showPurchaseMsg('Please choose an item.'); return false; }
+    if(!qty || qty<=0){ showPurchaseMsg('Enter a quantity greater than zero.'); return false; }
+    item.qty += qty;
+    if(price>0) item.cost = price;
+    await saveItems();
+    txns.push({
+      id: Date.now()+Math.random(),
+      type: 'expense',
+      source: 'purchase',
+      itemId: item.id,
+      itemName: item.name,
+      qty, unit: item.unit, pricePerUnit: price,
+      date: date || new Date().toISOString().slice(0,10),
+      category: 'Purchases',
+      amount: qty*price,
+      paymentMode: paymentMode || 'Cash',
+      note: note || `Purchased ${qty} ${item.unit} x ${item.name}`
+    });
+    await saveTxns();
+    return true;
+  }
+
+  async function updatePurchase(txnId, newItemId, newQty, newPrice, newDate, newNote, newPaymentMode){
+    const t = txns.find(x=>x.id===txnId);
+    if(!t){ showPurchaseMsg('Could not find that purchase.'); return false; }
+    const oldItem = items.find(i=>i.id===t.itemId);
+    const newItem = items.find(i=>i.id===newItemId);
+    if(!newItem){ showPurchaseMsg('Please choose an item.'); return false; }
+    if(!newQty || newQty<=0){ showPurchaseMsg('Enter a quantity greater than zero.'); return false; }
+    if(oldItem && oldItem.id !== newItem.id){
+      oldItem.qty -= (t.qty||0);
+      newItem.qty += newQty;
+    } else {
+      newItem.qty = newItem.qty - (t.qty||0) + newQty;
+    }
+    if(newPrice>0) newItem.cost = newPrice;
+    await saveItems();
+    Object.assign(t, {
+      itemId: newItem.id, itemName: newItem.name, qty: newQty, unit: newItem.unit,
+      pricePerUnit: newPrice, date: newDate || t.date, note: newNote,
+      paymentMode: newPaymentMode, amount: newQty*newPrice, source:'purchase', type:'expense', category:'Purchases'
+    });
+    await saveTxns();
+    return true;
+  }
+
+  $('#purchase-btn').addEventListener('click', async ()=>{
+    const id = $('#purchase-item').value;
+    const item = items.find(i=>String(i.id)===String(id));
+    const qty = parseFloat($('#purchase-qty').value)||0;
+    const price = parseFloat($('#purchase-price').value)||0;
+    const date = $('#purchase-date').value;
+    const note = $('#purchase-note').value.trim();
+    const paymentMode = $('#purchase-payment').value;
+    if(!item){ showPurchaseMsg('Please choose an item.'); return; }
+    const ok = editingPurchaseId
+      ? await updatePurchase(editingPurchaseId, item.id, qty, price, date, note, paymentMode)
+      : await recordPurchase(item.id, qty, price, date, note, paymentMode);
+    if(ok){ resetPurchaseForm(); renderAll(); }
+  });
+  $('#purchase-cancel-btn').addEventListener('click', resetPurchaseForm);
+
+  function quickPurchase(itemId){
+    switchTab('purchases');
+    resetPurchaseForm();
+    $('#purchase-item').value = itemId;
+    updatePurchaseAvailable();
+    $('#purchase-qty').focus();
+  }
+
+  function startEditPurchase(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(!t) return;
+    switchTab('purchases');
+    populatePurchaseItemSelect();
+    $('#purchase-item').value = t.itemId;
+    updatePurchaseAvailable();
+    $('#purchase-available').value = (()=>{ const it = items.find(i=>i.id===t.itemId); return it ? `${it.qty - (t.qty||0)} ${it.unit}` : ''; })();
+    $('#purchase-qty').value = t.qty!=null ? t.qty : '';
+    $('#purchase-price').value = t.pricePerUnit!=null ? t.pricePerUnit : '';
+    $('#purchase-date').value = t.date;
+    $('#purchase-note').value = t.note && !/^Purchased /.test(t.note) ? t.note : '';
+    $('#purchase-payment').value = t.paymentMode || 'Cash';
+    editingPurchaseId = id;
+    $('#purchase-btn').textContent = 'Update Purchase';
+    $('#purchase-form-title').firstChild.textContent = 'Edit Purchase ';
+    $('#purchase-cancel-btn').style.display = 'inline-block';
+    showPurchaseMsg('');
+    $('#purchase-qty').focus();
+  }
+
+  async function deletePurchase(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(t){
+      const item = items.find(i=>i.id===t.itemId);
+      if(item){ item.qty -= (t.qty||0); await saveItems(); }
+    }
+    txns = txns.filter(x=>x.id!==id);
+    await saveTxns();
+    if(editingPurchaseId===id) resetPurchaseForm();
+    renderAll();
+  }
+
+  function renderPurchaseHistory(){
+    const tb = $('#purchase-table-body');
+    const purchases = txns.filter(t=>t.source==='purchase')
+      .sort((a,b)=>b.date.localeCompare(a.date));
+    if(purchases.length===0){
+      tb.innerHTML = `<tr class="empty-row"><td colspan="8">No purchases recorded yet — use the form above.</td></tr>`;
+    } else {
+      tb.innerHTML = purchases.map(t=>`<tr>
+        <td>${t.date}</td>
+        <td>${esc(t.itemName || t.category)}</td>
+        <td class="num">${t.qty!=null ? t.qty : '—'}</td>
+        <td class="num">${t.pricePerUnit!=null ? fmt(t.pricePerUnit) : '—'}</td>
+        <td class="num type-expense">${fmt(t.amount)}</td>
+        <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
+        <td>${esc(t.note||'—')}</td>
+        <td>
+          ${isAdmin() ? `<button class="btn small outline" data-editpurchase="${t.id}">Edit</button>` : ''}
+          <button class="btn small outline" data-printpurchase="${t.id}">Print</button>
+          <button class="btn small outline" data-wapurchase="${t.id}">WhatsApp</button>
+          ${isAdmin() ? `<button class="btn danger small" data-delpurchase="${t.id}">Remove</button>` : ''}
+        </td>
+      </tr>`).join('');
+      $$('button[data-delpurchase]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        if(confirm('Remove this purchase and take the quantity back out of stock?')) deletePurchase(parseFloat(b.dataset.delpurchase));
+      }));
+      $$('button[data-editpurchase]', tb).forEach(b=>b.addEventListener('click', ()=>startEditPurchase(parseFloat(b.dataset.editpurchase))));
+      $$('button[data-printpurchase]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        const t = txns.find(x=>x.id===parseFloat(b.dataset.printpurchase));
+        if(t) printBill(t, 'purchase');
+      }));
+      $$('button[data-wapurchase]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        const t = txns.find(x=>x.id===parseFloat(b.dataset.wapurchase));
+        if(t) shareOnWhatsApp(t, 'purchase');
+      }));
+    }
+    $('#purchase-count').textContent = purchases.length + ' purchase' + (purchases.length===1?'':'s');
+  }
+
+  // ---------- Transactions ----------
+  let editingTxnId = null;
+
+  function resetTxnForm(){
+    $('#txn-cat').value=''; $('#txn-amount').value=''; $('#txn-note').value='';
+    $('#txn-date').value = new Date().toISOString().slice(0,10);
+    $('#txn-type').value = 'income';
+    $('#txn-payment').value = 'Cash';
+    editingTxnId = null;
+    $('#txn-add-btn').textContent = 'Add Entry';
+    $('#txn-form-title').textContent = 'Record Entry';
+    $('#txn-cancel-btn').style.display = 'none';
+  }
+
+  function startEditTxn(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(!t) return;
+    if(t.source==='sale'){ startEditSale(id); return; }
+    if(t.source==='purchase'){ startEditPurchase(id); return; }
+    $('#txn-type').value = t.type;
+    $('#txn-date').value = t.date;
+    $('#txn-cat').value = t.category;
+    $('#txn-amount').value = t.amount;
+    $('#txn-note').value = t.note || '';
+    $('#txn-payment').value = t.paymentMode || 'Cash';
+    editingTxnId = id;
+    $('#txn-add-btn').textContent = 'Update Entry';
+    $('#txn-form-title').textContent = 'Edit Entry';
+    $('#txn-cancel-btn').style.display = 'inline-block';
+    $('#txn-amount').focus();
+  }
+
+  $('#txn-cancel-btn').addEventListener('click', resetTxnForm);
+
+  $('#txn-add-btn').addEventListener('click', async ()=>{
+    const type = $('#txn-type').value;
+    const date = $('#txn-date').value || new Date().toISOString().slice(0,10);
+    const category = $('#txn-cat').value.trim() || 'Uncategorized';
+    const amount = parseFloat($('#txn-amount').value)||0;
+    const note = $('#txn-note').value.trim();
+    const paymentMode = $('#txn-payment').value;
+    if(!amount){ $('#txn-amount').focus(); return; }
+    if(editingTxnId){
+      const t = txns.find(x=>x.id===editingTxnId);
+      if(t){ Object.assign(t, {type, date, category, amount, note, paymentMode}); }
+    } else {
+      txns.push({id: Date.now()+Math.random(), type, date, category, amount, note, paymentMode});
+    }
+    await saveTxns();
+    resetTxnForm();
+    renderAll();
+  });
+
+  async function deleteTxn(id){
+    if(!isAdmin()) return;
+    const t = txns.find(x=>x.id===id);
+    if(t && (t.source==='sale' || t.source==='purchase')){
+      const item = items.find(i=>i.id===t.itemId);
+      if(item){
+        item.qty += (t.source==='sale' ? (t.qty||0) : -(t.qty||0));
+        await saveItems();
+      }
+    }
+    txns = txns.filter(x=>x.id!==id);
+    await saveTxns();
+    if(editingTxnId===id) resetTxnForm();
+    if(editingSaleId===id) resetSaleForm();
+    if(editingPurchaseId===id) resetPurchaseForm();
+    renderAll();
+  }
+
+  function renderTransactions(){
+    const tb = $('#txn-table-body');
+    const sorted = [...txns].sort((a,b)=> b.date.localeCompare(a.date));
+    if(sorted.length===0){
+      tb.innerHTML = `<tr class="empty-row"><td colspan="7">No entries yet — record your first income or expense above.</td></tr>`;
+    } else {
+      tb.innerHTML = sorted.map(t=>`<tr>
+        <td>${t.date}</td>
+        <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
+        <td><span class="tag">${esc(t.category)}</span></td>
+        <td>${esc(t.note||'—')}</td>
+        <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
+        <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+        <td>
+          ${isAdmin() ? `<button class="btn small outline" data-edittxn="${t.id}">Edit</button>
+          <button class="btn danger small" data-deltxn="${t.id}">Remove</button>` : ''}
+        </td>
+      </tr>`).join('');
+      $$('button[data-deltxn]', tb).forEach(b=>b.addEventListener('click', ()=>{
+        const id = parseFloat(b.dataset.deltxn);
+        const t = txns.find(x=>x.id===id);
+        const isStockLinked = t && (t.source==='sale' || t.source==='purchase');
+        if(isStockLinked && !confirm('This entry is linked to a stock item. Removing it will also adjust the item\'s quantity. Continue?')) return;
+        deleteTxn(id);
+      }));
+      $$('button[data-edittxn]', tb).forEach(b=>b.addEventListener('click', ()=>startEditTxn(parseFloat(b.dataset.edittxn))));
+    }
+    $('#txn-count').textContent = txns.length + ' entr' + (txns.length===1?'y':'ies');
+  }
+
+  // ---------- Dashboard ----------
+  function renderDashboard(){
+    const stockValue = items.reduce((s,i)=>s+i.qty*i.cost,0);
+    const totalIncome = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const totalExpense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const net = totalIncome-totalExpense;
+
+    const pending = txns.filter(t=>t.paymentMode==='Pending');
+    const pendingReceivable = pending.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const pendingPayable = pending.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const pendingTotal = pendingReceivable + pendingPayable;
+
+    // Cash & Bank balances, split by payment mode. Cash+UPI is split evenly. Pending is excluded (not yet settled).
+    let cashBalance = 0, bankBalance = 0;
+    txns.forEach(t=>{
+      const sign = t.type==='income' ? 1 : -1;
+      const mode = t.paymentMode;
+      if(mode==='Cash') cashBalance += sign*t.amount;
+      else if(mode==='UPI' || mode==='Bank') bankBalance += sign*t.amount;
+      else if(mode==='Cash+UPI'){ cashBalance += sign*t.amount/2; bankBalance += sign*t.amount/2; }
+      // 'Pending' and untagged entries are not yet in hand, excluded from both
+    });
+
+    const todayStr = new Date().toISOString().slice(0,10);
+    const todayIncome = txns.filter(t=>t.date===todayStr && t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const todayExpense = txns.filter(t=>t.date===todayStr && t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+    $('#dash-hero-cards').innerHTML = `
+      <div class="stat-card-hero cash">
+        <div class="hero-label">Cash Balance</div>
+        <div class="hero-value">₹ ${fmt(cashBalance)}</div>
+        <div class="hero-sub">Cash-tagged income minus expenses</div>
+      </div>
+      <div class="stat-card-hero bank">
+        <div class="hero-label">Bank Balance</div>
+        <div class="hero-value">₹ ${fmt(bankBalance)}</div>
+        <div class="hero-sub">UPI &amp; Bank-tagged income minus expenses</div>
+      </div>
+    `;
+
+    $('#dash-cards').innerHTML = `
+      <div class="stat-card pos"><div class="stat-label">Today's Income</div><div class="stat-value">₹ ${fmt(todayIncome)}</div></div>
+      <div class="stat-card neg"><div class="stat-label">Today's Expense</div><div class="stat-value">₹ ${fmt(todayExpense)}</div></div>
+      <div class="stat-card neg clickable" id="dash-pending-card"><div class="stat-label">Pending Amount</div><div class="stat-value">₹ ${fmt(pendingTotal)}</div></div>
+      <div class="stat-card"><div class="stat-label">Stock Value</div><div class="stat-value">₹ ${fmt(stockValue)}</div></div>
+      <div class="stat-card ${net>=0?'pos':'neg'}"><div class="stat-label">Net Profit (All Time)</div><div class="stat-value">₹ ${fmt(net)}</div></div>
+    `;
+    $('#dash-pending-card').addEventListener('click', ()=>{
+      $('#pending-payments-anchor').scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+
+    const pb = $('#dash-pending');
+    const pendingSorted = [...pending].sort((a,b)=>b.date.localeCompare(a.date));
+    pb.innerHTML = pendingSorted.length===0
+      ? `<tr class="empty-row"><td colspan="5">No pending payments — all sales and purchases are settled.</td></tr>`
+      : pendingSorted.map(t=>`<tr>
+          <td>${t.date}</td>
+          <td class="${t.type==='income'?'type-income':'type-expense'}">${t.source==='sale'?'Sale':t.source==='purchase'?'Purchase':(t.type==='income'?'Income':'Expense')}</td>
+          <td>${esc(t.itemName||t.category)}</td>
+          <td class="num">${fmt(t.amount)}</td>
+          <td>${esc(t.note||'—')}</td>
+        </tr>`).join('');
+
+    const low = items.filter(i=>i.qty<=i.reorder);
+    const lb = $('#dash-lowstock');
+    lb.innerHTML = low.length===0
+      ? `<tr class="empty-row"><td colspan="4">All items are above their reorder level.</td></tr>`
+      : low.map(i=>`<tr><td>${esc(i.name)}</td><td><span class="tag">${esc(i.category)}</span></td><td class="num">${i.qty}</td><td class="num">${i.reorder}</td></tr>`).join('');
+
+    const recent = [...txns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+    const rb = $('#dash-recent');
+    rb.innerHTML = recent.length===0
+      ? `<tr class="empty-row"><td colspan="5">No entries recorded yet.</td></tr>`
+      : recent.map(t=>`<tr>
+          <td>${t.date}</td>
+          <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
+          <td><span class="tag">${esc(t.category)}</span></td>
+          <td>${esc(t.note||'—')}</td>
+          <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+        </tr>`).join('');
+  }
+
+  // ---------- Reports ----------
+  let currentReport = 'itemstock';
+  let currentReportData = null; // { title, headers, rows } used for CSV/PDF export
+
+  function setCurrentReportData(title, headers, rows){
+    currentReportData = { title, headers, rows };
+  }
+
+  function updateReportFilterVisibility(){
+    $('#report-filters').style.display = (currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'flex' : 'none';
+    $('#item-filters').style.display = (currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') ? 'flex' : 'none';
+    $('#rep-item-cat-field').style.display = currentReport==='itemstock' ? 'block' : 'none';
+    $('#rep-payment-field').style.display = (currentReport==='sales'||currentReport==='purchases') ? 'block' : 'none';
+  }
+
+  $$('.report-toggle .btn').forEach(b=>b.addEventListener('click', ()=>{
+    $$('.report-toggle .btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    currentReport = b.dataset.report;
+    updateReportFilterVisibility();
+    if(currentReport==='itemstock') populateItemCatFilter();
+    if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') populateItemSearchSelect();
+    $('#report-title').textContent = b.textContent;
+    renderReport();
+  }));
+  $('#rep-from').addEventListener('change', renderReport);
+  $('#rep-to').addEventListener('change', renderReport);
+  $('#rep-clear').addEventListener('click', ()=>{ $('#rep-from').value=''; $('#rep-to').value=''; renderReport(); });
+  $('#rep-preset-today').addEventListener('click', ()=>{
+    const d = new Date().toISOString().slice(0,10);
+    $('#rep-from').value = d; $('#rep-to').value = d;
+    renderReport();
+  });
+  $('#rep-preset-month').addEventListener('click', ()=>{
+    const now = new Date();
+    const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+    const last = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().slice(0,10);
+    $('#rep-from').value = first; $('#rep-to').value = last;
+    renderReport();
+  });
+  $('#rep-item-cat').addEventListener('change', renderReport);
+  $('#rep-item-search').addEventListener('change', renderReport);
+  $('#rep-payment-filter').addEventListener('change', renderReport);
+
+  function populateItemCatFilter(){
+    const sel = $('#rep-item-cat');
+    const current = sel.value;
+    const cats = categoriesOf(items,'category');
+    sel.innerHTML = '<option value="">All categories</option>' + cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    sel.value = cats.includes(current) ? current : '';
+  }
+
+  function populateItemSearchSelect(){
+    const sel = $('#rep-item-search');
+    const current = sel.value;
+    let names;
+    if(currentReport==='itemstock'){
+      names = items.map(i=>i.name);
+    } else {
+      const fromItems = items.map(i=>i.name);
+      const fromTxns = txns.filter(t=>t.itemName).map(t=>t.itemName);
+      names = [...fromItems, ...fromTxns];
+    }
+    names = [...new Set(names)].sort((a,b)=>a.localeCompare(b));
+    sel.innerHTML = '<option value="">All items</option>' + names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    sel.value = names.includes(current) ? current : '';
+  }
+
+  function groupSum(list, key, valFn){
+    const map = {};
+    list.forEach(x=>{ const k=x[key]||'Uncategorized'; map[k]=(map[k]||0)+valFn(x); });
+    return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  }
+
+  function inDateRange(dateStr, from, to){
+    if(from && dateStr<from) return false;
+    if(to && dateStr>to) return false;
+    return true;
+  }
+
+  function renderReport(){
+    const body = $('#report-body');
+
+    if(currentReport==='itemstock'){
+      const catFilter = $('#rep-item-cat').value;
+      const search = $('#rep-item-search').value.trim().toLowerCase();
+      let list = [...items];
+      if(catFilter) list = list.filter(i=>i.category===catFilter);
+      if(search) list = list.filter(i=>i.name.toLowerCase().includes(search));
+      list.sort((a,b)=> a.name.localeCompare(b.name));
+      if(list.length===0){
+        body.innerHTML = '<p style="color:var(--ink-soft);font-style:italic;">No items match this filter.</p>';
+        setCurrentReportData('Item-wise Stock Count', ['Item','Category','Qty','Unit','Cost/Unit','Stock Value','Status'], []);
+        return;
+      }
+      const totalQty = list.reduce((s,i)=>s+i.qty,0);
+      const totalVal = list.reduce((s,i)=>s+i.qty*i.cost,0);
+      body.innerHTML = `
+        <table>
+          <thead><tr>
+            <th>Item</th><th>Category</th><th class="num">Qty in Stock</th><th>Unit</th>
+            <th class="num">Cost/Unit</th><th class="num">Stock Value</th><th>Status</th>
+          </tr></thead>
+          <tbody>
+            ${list.map(i=>{
+              const val = i.qty*i.cost;
+              const low = i.qty<=i.reorder;
+              return `<tr>
+                <td>${esc(i.name)}</td>
+                <td><span class="tag">${esc(i.category)}</span></td>
+                <td class="num">${i.qty}</td>
+                <td>${esc(i.unit)}</td>
+                <td class="num">${fmt(i.cost)}</td>
+                <td class="num">${fmt(val)}</td>
+                <td class="${low?'type-expense':'type-income'}">${low?'Low Stock':'OK'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        <div class="net-line">Items: ${list.length} &nbsp;|&nbsp; Total quantity: ${totalQty} &nbsp;|&nbsp; Total stock value: ₹ ${fmt(totalVal)}</div>
+      `;
+      setCurrentReportData('Item-wise Stock Count', ['Item','Category','Qty','Unit','Cost per Unit','Stock Value','Status'],
+        list.map(i=>[i.name, i.category, i.qty, i.unit, i.cost.toFixed(2), (i.qty*i.cost).toFixed(2), i.qty<=i.reorder?'Low Stock':'OK']));
+      return;
+    }
+
+    if(currentReport==='sales' || currentReport==='purchases'){
+      const isSale = currentReport==='sales';
+      const from = $('#rep-from').value, to = $('#rep-to').value;
+      const search = $('#rep-item-search').value.trim().toLowerCase();
+      const paymentFilter = $('#rep-payment-filter').value;
+      const list = txns.filter(t=> (isSale ? (t.source==='sale' || (!t.source && t.category==='Sales' && t.type==='income')) : t.source==='purchase'))
+        .filter(t=>inDateRange(t.date, from, to))
+        .filter(t=> !search || (t.itemName||'').toLowerCase().includes(search))
+        .filter(t=> !paymentFilter || t.paymentMode===paymentFilter)
+        .sort((a,b)=>b.date.localeCompare(a.date));
+      const label = isSale ? 'Sales' : 'Purchases';
+      if(list.length===0){
+        body.innerHTML = `<p style="color:var(--ink-soft);font-style:italic;">No ${label.toLowerCase()} match this filter.</p>`;
+        setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price/Unit','Amount','Payment','Note'], []);
+        return;
+      }
+      const totalQty = list.reduce((s,t)=>s+(t.qty||0),0);
+      const totalAmt = list.reduce((s,t)=>s+t.amount,0);
+      const byItem = groupSum(list, 'itemName', t=>t.amount);
+      const maxItem = Math.max(1, ...byItem.map(g=>g[1]));
+      const colorClass = isSale ? 'green' : 'red';
+      body.innerHTML = `
+        <table>
+          <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Price/Unit</th><th class="num">Amount</th><th>Payment</th>${isSale?'<th>Customer</th>':''}<th>Note</th></tr></thead>
+          <tbody>
+            ${list.map(t=>`<tr>
+              <td>${t.date}</td>
+              <td>${esc(t.itemName || t.category)}</td>
+              <td class="num">${t.qty!=null?t.qty:'—'}</td>
+              <td class="num">${t.pricePerUnit!=null?fmt(t.pricePerUnit):'—'}</td>
+              <td class="num">${fmt(t.amount)}</td>
+              <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
+              ${isSale?`<td>${t.customerName?esc(t.customerName):'—'}${t.customerMobile?' ('+esc(t.customerMobile)+')':''}</td>`:''}
+              <td>${esc(t.note||'—')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+        <div class="net-line">Entries: ${list.length} &nbsp;|&nbsp; Total quantity: ${totalQty} &nbsp;|&nbsp; Total ${label.toLowerCase()}: ₹ ${fmt(totalAmt)}</div>
+        <h2 class="section-title" style="margin-top:22px;">${label} by Item</h2>
+        ${byItem.map(([name,val])=>`
+          <div class="bar-row">
+            <div class="bar-label">${esc(name)}</div>
+            <div class="bar-track"><div class="bar-fill ${colorClass}" style="width:${(val/maxItem*100)}%"></div></div>
+            <div class="bar-value">₹ ${fmt(val)}</div>
+          </div>`).join('')}
+      `;
+      if(isSale){
+        setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price per Unit','Amount','Payment Mode','Customer','Mobile','Note'],
+          list.map(t=>[t.date, t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.customerName||'', t.customerMobile||'', t.note||'']));
+      } else {
+        setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price per Unit','Amount','Payment Mode','Note'],
+          list.map(t=>[t.date, t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.note||'']));
+      }
+      return;
+    }
+
+    // incomeexpense
+    const from = $('#rep-from').value, to = $('#rep-to').value;
+    const filtered = txns.filter(t=>inDateRange(t.date, from, to));
+    const incomeList = filtered.filter(t=>t.type==='income');
+    const expenseList = filtered.filter(t=>t.type==='expense');
+    const incomeByCategory = groupSum(incomeList, 'category', t=>t.amount);
+    const expenseByCategory = groupSum(expenseList, 'category', t=>t.amount);
+    const totalIncome = incomeList.reduce((s,t)=>s+t.amount,0);
+    const totalExpense = expenseList.reduce((s,t)=>s+t.amount,0);
+    const net = totalIncome - totalExpense;
+
+    if(incomeByCategory.length===0 && expenseByCategory.length===0){
+      body.innerHTML = '<p style="color:var(--ink-soft);font-style:italic;">No income or expense entries in this range.</p>';
+      setCurrentReportData('Income & Expense Report', ['Type','Category','Amount'], []);
+      return;
+    }
+    const maxI = Math.max(1, ...incomeByCategory.map(g=>g[1]));
+    const maxE = Math.max(1, ...expenseByCategory.map(g=>g[1]));
+    body.innerHTML = `
+      <h2 class="section-title" style="margin-top:0;">Income by Category</h2>
+      ${incomeByCategory.length===0 ? '<p style="color:var(--ink-soft);font-style:italic;">No income entries.</p>' :
+        incomeByCategory.map(([cat,val])=>`
+          <div class="bar-row">
+            <div class="bar-label">${esc(cat)}</div>
+            <div class="bar-track"><div class="bar-fill green" style="width:${(val/maxI*100)}%"></div></div>
+            <div class="bar-value">₹ ${fmt(val)}</div>
+          </div>`).join('')}
+      <h2 class="section-title">Expense by Category</h2>
+      ${expenseByCategory.length===0 ? '<p style="color:var(--ink-soft);font-style:italic;">No expense entries.</p>' :
+        expenseByCategory.map(([cat,val])=>`
+          <div class="bar-row">
+            <div class="bar-label">${esc(cat)}</div>
+            <div class="bar-track"><div class="bar-fill red" style="width:${(val/maxE*100)}%"></div></div>
+            <div class="bar-value">₹ ${fmt(val)}</div>
+          </div>`).join('')}
+      <div class="net-line">Total income: ₹ ${fmt(totalIncome)} &nbsp;|&nbsp; Total expense: ₹ ${fmt(totalExpense)} &nbsp;|&nbsp; Net: ₹ ${fmt(net)}</div>
+    `;
+    const rows = [
+      ...incomeByCategory.map(([cat,val])=>['Income', cat, val.toFixed(2)]),
+      ...expenseByCategory.map(([cat,val])=>['Expense', cat, val.toFixed(2)]),
+    ];
+    setCurrentReportData('Income & Expense Report', ['Type','Category','Amount'], rows);
+  }
+
+  // ---------- CSV / PDF export ----------
+  function csvEscape(v){
+    const s = String(v==null?'':v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+  }
+
+  function exportCSV(title, headers, rows){
+    const lines = [headers.map(csvEscape).join(',')].concat(rows.map(r=>r.map(csvEscape).join(',')));
+    const blob = new Blob([lines.join('\n')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title.replace(/\s+/g,'_').toLowerCase() + '.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPDF(title, headers, rows){
+    const companyName = settings.companyName || 'Kavaad';
+    const tableRows = rows.length === 0
+      ? `<tr><td colspan="${headers.length}" style="text-align:center;color:#5B6478;font-style:italic;">No data for this report.</td></tr>`
+      : rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('');
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>
+  body{ font-family: Georgia, 'Times New Roman', serif; color:#1F2A44; margin:24px; }
+  h1{ font-size:18px; margin:0 0 2px; }
+  .meta{ font-size:11px; color:#5B6478; margin-bottom:16px; }
+  table{ width:100%; border-collapse:collapse; font-family:'Courier New',monospace; font-size:11.5px; }
+  th, td{ padding:6px 8px; text-align:left; border-bottom:1px solid #C9C0AC; }
+  th{ text-transform:uppercase; font-size:10px; letter-spacing:.6px; border-bottom:2px solid #1F2A44; }
+  @media print { body{ margin:12mm; } }
+</style>
+</head>
+<body>
+  <h1>${esc(companyName)} — ${esc(title)}</h1>
+  <div class="meta">Generated ${esc(new Date().toLocaleDateString('en-IN'))}</div>
+  <table>
+    <thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+</body></html>`;
+    const frame = document.getElementById('print-frame');
+    const doc = frame.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(()=>{
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    }, 150);
+  }
+
+  function downloadCSV(){
+    if(!currentReportData){ return; }
+    exportCSV(currentReportData.title, currentReportData.headers, currentReportData.rows);
+  }
+  function downloadPDF(){
+    if(!currentReportData){ return; }
+    exportPDF(currentReportData.title, currentReportData.headers, currentReportData.rows);
+  }
+
+  $('#rep-download-csv').addEventListener('click', downloadCSV);
+  $('#rep-download-pdf').addEventListener('click', downloadPDF);
+
+  function getCashbookExportData(){
+    const sorted = [...txns].sort((a,b)=>b.date.localeCompare(a.date));
+    const headers = ['Date','Type','Category','Note','Payment','Amount'];
+    const rows = sorted.map(t=>[
+      t.date, t.type==='income'?'Income':'Expense', t.category,
+      t.note||'', t.paymentMode||'', (t.type==='income'?'':'-') + t.amount.toFixed(2)
+    ]);
+    return { title:'Cashbook', headers, rows };
+  }
+  $('#txn-download-csv').addEventListener('click', ()=>{
+    const d = getCashbookExportData();
+    exportCSV(d.title, d.headers, d.rows);
+  });
+  $('#txn-download-pdf').addEventListener('click', ()=>{
+    const d = getCashbookExportData();
+    exportPDF(d.title, d.headers, d.rows);
+  });
+
+  // ---------- Print bill / voucher ----------
+  function printBill(t, kind){
+    const isSale = kind==='sale';
+    const docTitle = isSale ? 'Sales Receipt' : 'Purchase Voucher';
+    const partyLabel = isSale ? 'Sold to' : 'Purchased from';
+    const partyValue = isSale
+      ? (t.customerName || (t.note && !/^Sold /.test(t.note) ? t.note : '—'))
+      : (t.note && !/^Purchased /.test(t.note) ? t.note : '—');
+    const companyName = settings.companyName || 'Kavaad';
+    const companyTagline = settings.tagline || 'Stock & Cashbook Ledger';
+    const contactLine = [settings.address, settings.phone].filter(Boolean).join(' &nbsp;|&nbsp; ');
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>${esc(docTitle)}</title>
+<style>
+  body{ font-family: Georgia, 'Times New Roman', serif; color:#1F2A44; max-width:420px; margin:30px auto; padding:0 10px; }
+  .bill-head{ text-align:center; border-bottom:2px solid #1F2A44; padding-bottom:10px; margin-bottom:16px; }
+  .bill-head .brand{ font-size:22px; font-weight:700; }
+  .bill-head .sub{ font-size:11px; letter-spacing:2px; text-transform:uppercase; color:#5B6478; }
+  .bill-head .contact{ font-size:11px; color:#5B6478; margin-top:4px; }
+  .bill-title{ text-align:center; font-size:14px; letter-spacing:1px; text-transform:uppercase; margin:14px 0; }
+  table{ width:100%; border-collapse:collapse; font-family:'Courier New',monospace; font-size:13px; margin-bottom:14px; }
+  td, th{ padding:6px 4px; text-align:left; }
+  th{ border-bottom:1px solid #1F2A44; text-transform:uppercase; font-size:10.5px; letter-spacing:1px; }
+  .num{ text-align:right; }
+  .meta{ font-size:12.5px; margin-bottom:4px; }
+  .total-row{ border-top:1px dashed #1F2A44; font-weight:700; }
+  .footer{ text-align:center; font-size:11px; color:#5B6478; margin-top:22px; border-top:1px dashed #C9C0AC; padding-top:10px; }
+  @media print { body{ margin:0 auto; } }
+</style>
+</head>
+<body>
+  <div class="bill-head">
+    <div class="brand">${esc(companyName)}</div>
+    <div class="sub">${esc(companyTagline)}</div>
+    ${contactLine ? `<div class="contact">${contactLine}</div>` : ''}
+  </div>
+  <div class="bill-title">${esc(docTitle)}</div>
+  <div class="meta"><strong>Date:</strong> ${esc(t.date)}</div>
+  <div class="meta"><strong>${esc(partyLabel)}:</strong> ${esc(partyValue)}</div>
+  ${isSale && t.customerMobile ? `<div class="meta"><strong>Mobile:</strong> ${esc(t.customerMobile)}</div>` : ''}
+  <div class="meta"><strong>Payment mode:</strong> ${esc(t.paymentMode || '—')}</div>
+  <table>
+    <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Rate</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>${esc(t.itemName || t.category)}</td>
+        <td class="num">${t.qty!=null?t.qty:'—'}${t.unit?(' '+esc(t.unit)):''}</td>
+        <td class="num">${t.pricePerUnit!=null?fmt(t.pricePerUnit):'—'}</td>
+        <td class="num">${fmt(t.amount)}</td>
+      </tr>
+      <tr class="total-row"><td colspan="3">Total</td><td class="num">₹ ${fmt(t.amount)}</td></tr>
+    </tbody>
+  </table>
+  ${isSale && t.note ? `<div class="meta"><strong>Note:</strong> ${esc(t.note)}</div>` : ''}
+  <div class="footer">Thank you${isSale ? ' for your business' : ''}.<br/>Generated from ${esc(companyName)}</div>
+</body></html>`;
+    const frame = document.getElementById('print-frame');
+    const doc = frame.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(()=>{
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    }, 150);
+  }
+
+  function shareOnWhatsApp(t, kind){
+    const isSale = kind==='sale';
+    const companyName = settings.companyName || 'Kavaad';
+    const label = isSale ? 'Sales Receipt' : 'Purchase Voucher';
+    const lines = [
+      `*${companyName}* — ${label}`,
+      `Date: ${t.date}`,
+      isSale && t.customerName ? `Customer: ${t.customerName}` : null,
+      `Item: ${t.itemName || t.category}${t.qty!=null?` (${t.qty}${t.unit?' '+t.unit:''})`:''}`,
+      t.pricePerUnit!=null ? `Rate: ₹ ${fmt(t.pricePerUnit)}` : null,
+      `Amount: ₹ ${fmt(t.amount)}`,
+      `Payment mode: ${t.paymentMode || '—'}`,
+      t.note ? `Note: ${t.note}` : null
+    ].filter(Boolean);
+    const text = encodeURIComponent(lines.join('\n'));
+    const customerNumber = isSale ? (t.customerMobile || '').replace(/[^\d]/g,'') : '';
+    const number = customerNumber || (settings.whatsapp || '').replace(/[^\d]/g,'');
+    const url = number ? `https://wa.me/${number}?text=${text}` : `https://api.whatsapp.com/send?text=${text}`;
+    window.open(url, '_blank');
+  }
+
+  function renderAll(){
+    refreshDatalists();
+    renderInventory();
+    renderTransactions();
+    renderSalesHistory();
+    renderPurchaseHistory();
+    renderDashboard();
+    if(document.getElementById('view-reports').classList.contains('active')) renderReport();
+  }
+
+  loadAll().then(()=>{ gdCheckAutoBackupOnLoad(); });
+})();
+</script>
