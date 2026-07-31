@@ -509,6 +509,16 @@
       <button class="btn danger small" id="settings-reset-btn">Reset All Data</button>
       <input type="file" id="settings-restore-file" accept="application/json,.json" style="display:none;"/>
       <div id="settings-restore-msg" style="display:none;margin-top:10px;font-size:12.5px;"></div>
+
+      <div id="reset-confirm-area" style="display:none; margin-top:16px; padding:14px; border:1px solid var(--red); border-radius:8px; background:var(--red-soft);">
+        <p style="font-size:12.5px; color:var(--ink); margin:0 0 10px; font-weight:600;">This permanently deletes every item, sale, purchase, and transaction in this browser. There is no undo — export a backup first if you're not sure.</p>
+        <p style="font-size:12px; color:var(--ink-soft); margin:0 0 8px;">Type <strong id="reset-confirm-phrase-display">DELETE ALL DATA</strong> below to confirm:</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <input id="reset-confirm-input" placeholder="Type here" style="flex:1; min-width:180px; padding:9px 10px; border:1px solid var(--line); border-radius:7px; font-size:13.5px;"/>
+          <button class="btn danger small" id="reset-confirm-submit-btn" disabled>Permanently Delete Everything</button>
+          <button class="btn outline small" id="reset-confirm-cancel-btn">Cancel</button>
+        </div>
+      </div>
     </div>
 
     <h2 class="section-title">Cloud Sync <span class="stamp">Share live data across devices</span></h2>
@@ -949,12 +959,37 @@
     reader.readAsText(file);
   });
 
-  $('#settings-reset-btn').addEventListener('click', async ()=>{
+  const RESET_CONFIRM_PHRASE = 'DELETE ALL DATA';
+
+  $('#settings-reset-btn').addEventListener('click', ()=>{
     if(!isAdmin()) return;
-    if(!confirm('This will permanently delete all items, sales, purchases, and transactions in this browser. Continue?')) return;
+    $('#reset-confirm-phrase-display').textContent = RESET_CONFIRM_PHRASE;
+    $('#reset-confirm-input').value = '';
+    $('#reset-confirm-submit-btn').disabled = true;
+    $('#reset-confirm-area').style.display = 'block';
+    $('#reset-confirm-input').focus();
+    $('#reset-confirm-area').scrollIntoView({ behavior:'smooth', block:'center' });
+  });
+
+  function hideResetConfirm(){
+    $('#reset-confirm-area').style.display = 'none';
+    $('#reset-confirm-input').value = '';
+    $('#reset-confirm-submit-btn').disabled = true;
+  }
+
+  $('#reset-confirm-input').addEventListener('input', ()=>{
+    $('#reset-confirm-submit-btn').disabled = $('#reset-confirm-input').value !== RESET_CONFIRM_PHRASE;
+  });
+
+  $('#reset-confirm-cancel-btn').addEventListener('click', hideResetConfirm);
+
+  $('#reset-confirm-submit-btn').addEventListener('click', async ()=>{
+    if(!isAdmin()) return;
+    if($('#reset-confirm-input').value !== RESET_CONFIRM_PHRASE) return;
     items = []; txns = [];
     await saveItems(); await saveTxns();
     renderAll();
+    hideResetConfirm();
     showSettingsMsg('All data has been reset.');
     setTimeout(()=>showSettingsMsg(''), 2500);
   });
@@ -1417,12 +1452,13 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   // ---------- Tab switching helper ----------
   function switchTab(viewName){
     if(currentUser && !userCanAccess(viewName)) return;
+    if(viewName!=='settings' && typeof hideResetConfirm==='function') hideResetConfirm();
     $$('.tab').forEach(x=>x.classList.toggle('active', x.dataset.view===viewName));
     $$('.view').forEach(x=>x.classList.toggle('active', x.id==='view-'+viewName));
     if(viewName==='reports'){
       updateReportFilterVisibility();
       if(currentReport==='itemstock') populateItemCatFilter();
-      if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') populateItemSearchSelect();
+      if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') populateItemSearchSelect();
       renderReport();
     }
   }
@@ -2013,9 +2049,9 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
   function updateReportFilterVisibility(){
     $('#report-filters').style.display = (currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'flex' : 'none';
-    $('#item-filters').style.display = (currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') ? 'flex' : 'none';
+    $('#item-filters').style.display = (currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'flex' : 'none';
     $('#rep-item-cat-field').style.display = currentReport==='itemstock' ? 'block' : 'none';
-    $('#rep-payment-field').style.display = (currentReport==='sales'||currentReport==='purchases') ? 'block' : 'none';
+    $('#rep-payment-field').style.display = (currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'block' : 'none';
   }
 
   $$('.report-toggle .btn').forEach(b=>b.addEventListener('click', ()=>{
@@ -2024,7 +2060,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     currentReport = b.dataset.report;
     updateReportFilterVisibility();
     if(currentReport==='itemstock') populateItemCatFilter();
-    if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases') populateItemSearchSelect();
+    if(currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') populateItemSearchSelect();
     $('#report-title').textContent = b.textContent;
     renderReport();
   }));
@@ -2187,22 +2223,30 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
     // incomeexpense
     const from = $('#rep-from').value, to = $('#rep-to').value;
-    const filtered = txns.filter(t=>inDateRange(t.date, from, to));
+    const itemSearch = $('#rep-item-search').value.trim().toLowerCase();
+    const paymentFilter = $('#rep-payment-filter').value;
+    const filtered = txns.filter(t=>inDateRange(t.date, from, to))
+      .filter(t=> !itemSearch || (t.itemName||'').toLowerCase().includes(itemSearch))
+      .filter(t=> !paymentFilter || t.paymentMode===paymentFilter);
     const incomeList = filtered.filter(t=>t.type==='income');
     const expenseList = filtered.filter(t=>t.type==='expense');
     const incomeByCategory = groupSum(incomeList, 'category', t=>t.amount);
     const expenseByCategory = groupSum(expenseList, 'category', t=>t.amount);
+    const incomeByItem = groupSum(incomeList.filter(t=>t.itemName), 'itemName', t=>t.amount);
+    const expenseByItem = groupSum(expenseList.filter(t=>t.itemName), 'itemName', t=>t.amount);
     const totalIncome = incomeList.reduce((s,t)=>s+t.amount,0);
     const totalExpense = expenseList.reduce((s,t)=>s+t.amount,0);
     const net = totalIncome - totalExpense;
 
     if(incomeByCategory.length===0 && expenseByCategory.length===0){
-      body.innerHTML = '<p style="color:var(--ink-soft);font-style:italic;">No income or expense entries in this range.</p>';
-      setCurrentReportData('Income & Expense Report', ['Type','Category','Amount'], []);
+      body.innerHTML = '<p style="color:var(--ink-soft);font-style:italic;">No income or expense entries match this filter.</p>';
+      setCurrentReportData('Income & Expense Report', ['Date','Type','Category','Item','Payment Mode','Amount','Note'], []);
       return;
     }
     const maxI = Math.max(1, ...incomeByCategory.map(g=>g[1]));
     const maxE = Math.max(1, ...expenseByCategory.map(g=>g[1]));
+    const maxII = Math.max(1, ...incomeByItem.map(g=>g[1]));
+    const maxEI = Math.max(1, ...expenseByItem.map(g=>g[1]));
     body.innerHTML = `
       <h2 class="section-title" style="margin-top:0;">Income by Category</h2>
       ${incomeByCategory.length===0 ? '<p style="color:var(--ink-soft);font-style:italic;">No income entries.</p>' :
@@ -2220,13 +2264,43 @@ alter publication supabase_realtime add table kavaad_workspace;`;
             <div class="bar-track"><div class="bar-fill red" style="width:${(val/maxE*100)}%"></div></div>
             <div class="bar-value">₹ ${fmt(val)}</div>
           </div>`).join('')}
+      ${incomeByItem.length>0 ? `
+      <h2 class="section-title">Income by Item</h2>
+      ${incomeByItem.map(([name,val])=>`
+        <div class="bar-row">
+          <div class="bar-label">${esc(name)}</div>
+          <div class="bar-track"><div class="bar-fill green" style="width:${(val/maxII*100)}%"></div></div>
+          <div class="bar-value">₹ ${fmt(val)}</div>
+        </div>`).join('')}` : ''}
+      ${expenseByItem.length>0 ? `
+      <h2 class="section-title">Expense by Item</h2>
+      ${expenseByItem.map(([name,val])=>`
+        <div class="bar-row">
+          <div class="bar-label">${esc(name)}</div>
+          <div class="bar-track"><div class="bar-fill red" style="width:${(val/maxEI*100)}%"></div></div>
+          <div class="bar-value">₹ ${fmt(val)}</div>
+        </div>`).join('')}` : ''}
+      <h2 class="section-title">All Entries</h2>
+      <table>
+        <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Item</th><th>Payment</th><th class="num">Amount</th><th>Note</th></tr></thead>
+        <tbody>
+          ${filtered.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr>
+            <td>${t.date}</td>
+            <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
+            <td><span class="tag">${esc(t.category)}</span></td>
+            <td>${t.itemName?esc(t.itemName):'—'}</td>
+            <td>${esc(t.paymentMode||'—')}</td>
+            <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
+            <td>${esc(t.note||'—')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
       <div class="net-line">Total income: ₹ ${fmt(totalIncome)} &nbsp;|&nbsp; Total expense: ₹ ${fmt(totalExpense)} &nbsp;|&nbsp; Net: ₹ ${fmt(net)}</div>
     `;
-    const rows = [
-      ...incomeByCategory.map(([cat,val])=>['Income', cat, val.toFixed(2)]),
-      ...expenseByCategory.map(([cat,val])=>['Expense', cat, val.toFixed(2)]),
-    ];
-    setCurrentReportData('Income & Expense Report', ['Type','Category','Amount'], rows);
+    const rows = filtered.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[
+      t.date, t.type==='income'?'Income':'Expense', t.category, t.itemName||'', t.paymentMode||'', t.amount.toFixed(2), t.note||''
+    ]);
+    setCurrentReportData('Income & Expense Report', ['Date','Type','Category','Item','Payment Mode','Amount','Note'], rows);
   }
 
   // ---------- CSV / PDF export ----------
