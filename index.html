@@ -2247,8 +2247,24 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const maxE = Math.max(1, ...expenseByCategory.map(g=>g[1]));
     const maxII = Math.max(1, ...incomeByItem.map(g=>g[1]));
     const maxEI = Math.max(1, ...expenseByItem.map(g=>g[1]));
+    const categorySummaryRows = [
+      ...incomeByCategory.map(([cat,val])=>({ type:'Income', cat, val, pct: totalIncome>0 ? (val/totalIncome*100) : 0 })),
+      ...expenseByCategory.map(([cat,val])=>({ type:'Expense', cat, val, pct: totalExpense>0 ? (val/totalExpense*100) : 0 })),
+    ];
     body.innerHTML = `
-      <h2 class="section-title" style="margin-top:0;">Income by Category</h2>
+      <h2 class="section-title" style="margin-top:0;">Category-wise Summary</h2>
+      <table style="margin-bottom:22px;">
+        <thead><tr><th>Type</th><th>Category</th><th class="num">Total Amount</th><th class="num">% of Total</th></tr></thead>
+        <tbody>
+          ${categorySummaryRows.map(r=>`<tr>
+            <td class="type-${r.type==='Income'?'income':'expense'}">${r.type}</td>
+            <td><span class="tag">${esc(r.cat)}</span></td>
+            <td class="num type-${r.type==='Income'?'income':'expense'}">${r.type==='Income'?'+':'-'}${fmt(r.val)}</td>
+            <td class="num">${r.pct.toFixed(1)}%</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <h2 class="section-title">Income by Category</h2>
       ${incomeByCategory.length===0 ? '<p style="color:var(--ink-soft);font-style:italic;">No income entries.</p>' :
         incomeByCategory.map(([cat,val])=>`
           <div class="bar-row">
