@@ -475,6 +475,14 @@
           <option value="Pending">Pending</option>
         </select>
       </div>
+      <div class="field" id="rep-source-field" style="display:none;"><label>Source</label>
+        <select id="rep-source-filter">
+          <option value="">All entries</option>
+          <option value="manual">Manually entered only</option>
+          <option value="sale">From Sales only</option>
+          <option value="purchase">From Purchases only</option>
+        </select>
+      </div>
     </div>
     <h2 class="section-title">
       <span id="report-title">Item-wise Stock Count</span>
@@ -2052,6 +2060,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#item-filters').style.display = (currentReport==='itemstock'||currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'flex' : 'none';
     $('#rep-item-cat-field').style.display = currentReport==='itemstock' ? 'block' : 'none';
     $('#rep-payment-field').style.display = (currentReport==='sales'||currentReport==='purchases'||currentReport==='incomeexpense') ? 'block' : 'none';
+    $('#rep-source-field').style.display = currentReport==='incomeexpense' ? 'block' : 'none';
   }
 
   $$('.report-toggle .btn').forEach(b=>b.addEventListener('click', ()=>{
@@ -2082,6 +2091,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   $('#rep-item-cat').addEventListener('change', renderReport);
   $('#rep-item-search').addEventListener('change', renderReport);
   $('#rep-payment-filter').addEventListener('change', renderReport);
+  $('#rep-source-filter').addEventListener('change', renderReport);
 
   function populateItemCatFilter(){
     const sel = $('#rep-item-cat');
@@ -2225,9 +2235,15 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const from = $('#rep-from').value, to = $('#rep-to').value;
     const itemSearch = $('#rep-item-search').value.trim().toLowerCase();
     const paymentFilter = $('#rep-payment-filter').value;
+    const sourceFilter = $('#rep-source-filter').value;
     const filtered = txns.filter(t=>inDateRange(t.date, from, to))
       .filter(t=> !itemSearch || (t.itemName||'').toLowerCase().includes(itemSearch))
-      .filter(t=> !paymentFilter || t.paymentMode===paymentFilter);
+      .filter(t=> !paymentFilter || t.paymentMode===paymentFilter)
+      .filter(t=>{
+        if(!sourceFilter) return true;
+        if(sourceFilter==='manual') return t.source!=='sale' && t.source!=='purchase';
+        return t.source===sourceFilter;
+      });
     const incomeList = filtered.filter(t=>t.type==='income');
     const expenseList = filtered.filter(t=>t.type==='expense');
     const incomeByCategory = groupSum(incomeList, 'category', t=>t.amount);
