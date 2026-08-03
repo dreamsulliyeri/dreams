@@ -286,7 +286,7 @@
     <div class="cards-row" id="dash-cards"></div>
     <h2 class="section-title" id="pending-payments-anchor">Pending Payments <span class="stamp">Sales &amp; purchases marked Pending</span></h2>
     <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th class="num">Amount</th><th>Note</th></tr></thead>
+      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Note</th></tr></thead>
       <tbody id="dash-pending"></tbody>
     </table>
     <h2 class="section-title">Low Stock Watch <span class="stamp">Qty at or below reorder level</span></h2>
@@ -348,7 +348,15 @@
             <option value="Pending">Pending</option>
           </select>
         </div>
-        <div class="field"><label>Supplier / note</label><input id="purchase-note" placeholder="optional"/></div>
+        <div class="field" id="purchase-split-cashupi" style="display:none;"><label>Cash amount</label><input id="purchase-cash-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="purchase-split-cashupi2" style="display:none;"><label>UPI amount</label><input id="purchase-upi-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="purchase-split-paid" style="display:none;"><label>Amount paid now</label><input id="purchase-paid-now" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="purchase-split-paidmode" style="display:none;"><label>Paid via</label>
+          <select id="purchase-paid-mode"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank">Bank</option></select>
+        </div>
+        <div class="field" id="purchase-split-remaining" style="display:none;"><label>Still pending</label><input id="purchase-pending-remaining" disabled placeholder="0.00"/></div>
+        <div class="field"><label>Supplier name</label><input id="purchase-supplier-name" placeholder="optional"/></div>
+        <div class="field"><label>Note</label><input id="purchase-note" placeholder="optional"/></div>
         <div class="field"><button class="btn" id="purchase-btn">Record Purchase</button></div>
         <div class="field"><button class="btn outline" id="purchase-cancel-btn" style="display:none;">Cancel</button></div>
       </div>
@@ -357,7 +365,7 @@
     </div>
     <h2 class="section-title">Purchase History <span class="stamp" id="purchase-count"></span></h2>
     <table>
-      <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Cost/Unit</th><th class="num">Amount</th><th>Payment</th><th>Note</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Cost/Unit</th><th class="num">Amount</th><th>Payment</th><th>Supplier</th><th>Note</th><th></th></tr></thead>
       <tbody id="purchase-table-body"></tbody>
     </table>
     <p style="margin-top:8px;font-size:11px;color:var(--ink-soft);">Removing a purchase entry deletes the expense record and automatically removes that quantity from stock again.</p>
@@ -384,6 +392,13 @@
             <option value="Pending">Pending</option>
           </select>
         </div>
+        <div class="field" id="sale-split-cashupi" style="display:none;"><label>Cash amount</label><input id="sale-cash-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="sale-split-cashupi2" style="display:none;"><label>UPI amount</label><input id="sale-upi-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="sale-split-paid" style="display:none;"><label>Amount received now</label><input id="sale-paid-now" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="sale-split-paidmode" style="display:none;"><label>Received via</label>
+          <select id="sale-paid-mode"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank">Bank</option></select>
+        </div>
+        <div class="field" id="sale-split-remaining" style="display:none;"><label>Still pending</label><input id="sale-pending-remaining" disabled placeholder="0.00"/></div>
         <div class="field"><label>Customer name</label><input id="sale-customer-name" placeholder="optional"/></div>
         <div class="field"><label>Mobile number</label><input id="sale-customer-mobile" type="tel" placeholder="optional"/></div>
         <div class="field"><label>Note</label><input id="sale-note" placeholder="optional"/></div>
@@ -421,6 +436,13 @@
             <option value="Pending">Pending</option>
           </select>
         </div>
+        <div class="field" id="txn-split-cashupi" style="display:none;"><label>Cash amount</label><input id="txn-cash-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="txn-split-cashupi2" style="display:none;"><label>UPI amount</label><input id="txn-upi-amt" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="txn-split-paid" style="display:none;"><label>Amount settled now</label><input id="txn-paid-now" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field" id="txn-split-paidmode" style="display:none;"><label>Settled via</label>
+          <select id="txn-paid-mode"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank">Bank</option></select>
+        </div>
+        <div class="field" id="txn-split-remaining" style="display:none;"><label>Still pending</label><input id="txn-pending-remaining" disabled placeholder="0.00"/></div>
         <div class="field"><label>Note</label><input id="txn-note" placeholder="optional"/></div>
         <div class="field"><button class="btn" id="txn-add-btn">Add Entry</button></div>
         <div class="field"><button class="btn outline" id="txn-cancel-btn" style="display:none;">Cancel</button></div>
@@ -509,6 +531,19 @@
       <div id="settings-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--green);"></div>
       <p style="margin:10px 0 0;font-size:11.5px;color:var(--ink-soft);">The WhatsApp number is used as the default recipient when you tap "Share on WhatsApp" for a sale or purchase — leave it blank to pick a contact each time instead.</p>
     </div>
+
+    <h2 class="section-title">Opening Balances <span class="stamp">Added to the Dashboard's Cash &amp; Bank totals</span></h2>
+    <div class="panel">
+      <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">Set the cash and bank balance you had on hand before you started using this app. These amounts are added on top of everything tracked from your Sales, Purchases, and Income &amp; Expense entries.</p>
+      <div class="form-grid">
+        <div class="field"><label>Opening cash balance</label><input id="set-opening-cash" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>Opening bank balance</label><input id="set-opening-bank" type="number" min="0" step="0.01" placeholder="0.00"/></div>
+        <div class="field"><label>As of date</label><input id="set-opening-date" type="date"/></div>
+        <div class="field"><button class="btn" id="settings-opening-save-btn">Save Opening Balances</button></div>
+      </div>
+      <div id="settings-opening-msg" style="display:none;margin-top:10px;font-size:12.5px;color:var(--green);"></div>
+    </div>
+
     <h2 class="section-title">Data</h2>
     <div class="panel">
       <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">Your inventory, sales, purchases, transactions, and users are stored only in this browser. Back up regularly so you never lose data.</p>
@@ -620,10 +655,17 @@
   const $ = (sel, el=document) => el.querySelector(sel);
   const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
   const fmt = n => (isNaN(n)?0:n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+  function formatDate(d){
+    if(!d) return '—';
+    const parts = String(d).slice(0,10).split('-');
+    if(parts.length!==3) return d;
+    const [y,m,day] = parts;
+    return `${day}-${m}-${y}`;
+  }
 
   let items = [];
   let txns = [];
-  const defaultSettings = { companyName:'Kavaad', tagline:'Stock & Cashbook Ledger', address:'', phone:'', whatsapp:'', googleClientId:'', autoBackupEnabled:true, csUrl:'', csKey:'', csWorkspace:'default', csEnabled:false };
+  const defaultSettings = { companyName:'Kavaad', tagline:'Stock & Cashbook Ledger', address:'', phone:'', whatsapp:'', googleClientId:'', autoBackupEnabled:true, csUrl:'', csKey:'', csWorkspace:'default', csEnabled:false, openingCash:0, openingBank:0, openingDate:'' };
   let settings = { ...defaultSettings };
 
   const ALL_TABS = ['dashboard','inventory','purchases','sales','transactions','reports'];
@@ -659,6 +701,9 @@
     $('#cs-url').value = settings.csUrl || '';
     $('#cs-key').value = settings.csKey || '';
     $('#cs-workspace').value = settings.csWorkspace || 'default';
+    $('#set-opening-cash').value = settings.openingCash || 0;
+    $('#set-opening-bank').value = settings.openingBank || 0;
+    $('#set-opening-date').value = settings.openingDate || '';
   }
 
   async function loadAll(){
@@ -908,6 +953,22 @@
     applySettingsToUI();
     showSettingsMsg('Settings saved.');
     setTimeout(()=>showSettingsMsg(''), 2500);
+  });
+  $('#settings-opening-save-btn').addEventListener('click', ()=>{
+    if(!isAdmin()) return;
+    settings = {
+      ...settings,
+      openingCash: parseFloat($('#set-opening-cash').value) || 0,
+      openingBank: parseFloat($('#set-opening-bank').value) || 0,
+      openingDate: $('#set-opening-date').value || ''
+    };
+    saveSettingsToStorage();
+    applySettingsToUI();
+    renderAll();
+    const el = $('#settings-opening-msg');
+    el.textContent = 'Opening balances saved.';
+    el.style.display = 'block';
+    setTimeout(()=>{ el.style.display = 'none'; }, 2500);
   });
   $('#settings-export-btn').addEventListener('click', ()=>{
     const data = { items, txns, settings, users, exportedAt: new Date().toISOString() };
@@ -1353,6 +1414,73 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   });
   gdSetStatus();
 
+  // ---------- Payment split helper (Cash+UPI split / Pending partial payment) ----------
+  function setupPaymentSplit(prefix, getTotalAmount){
+    const paymentSel = $('#'+prefix+'-payment');
+    const cashUpiDiv1 = $('#'+prefix+'-split-cashupi');
+    const cashUpiDiv2 = $('#'+prefix+'-split-cashupi2');
+    const paidDiv = $('#'+prefix+'-split-paid');
+    const paidModeDiv = $('#'+prefix+'-split-paidmode');
+    const remainingDiv = $('#'+prefix+'-split-remaining');
+    const cashAmtInput = $('#'+prefix+'-cash-amt');
+    const upiAmtInput = $('#'+prefix+'-upi-amt');
+    const paidNowInput = $('#'+prefix+'-paid-now');
+    const remainingInput = $('#'+prefix+'-pending-remaining');
+
+    function updateVisibility(){
+      const mode = paymentSel.value;
+      const isCashUpi = mode === 'Cash+UPI';
+      const isPending = mode === 'Pending';
+      cashUpiDiv1.style.display = isCashUpi ? 'block' : 'none';
+      cashUpiDiv2.style.display = isCashUpi ? 'block' : 'none';
+      paidDiv.style.display = isPending ? 'block' : 'none';
+      paidModeDiv.style.display = isPending ? 'block' : 'none';
+      remainingDiv.style.display = isPending ? 'block' : 'none';
+      if(isCashUpi && !cashAmtInput.value && !upiAmtInput.value) syncCashUpi('total');
+      if(isPending) syncPending();
+    }
+
+    function syncCashUpi(source){
+      const total = getTotalAmount();
+      if(source==='upi'){
+        let upi = parseFloat(upiAmtInput.value)||0;
+        if(upi > total) upi = total;
+        if(upi < 0) upi = 0;
+        cashAmtInput.value = (total-upi).toFixed(2);
+      } else if(source==='total'){
+        cashAmtInput.value = (total/2).toFixed(2);
+        upiAmtInput.value = (total/2).toFixed(2);
+      } else {
+        let cash = parseFloat(cashAmtInput.value)||0;
+        if(cash > total) cash = total;
+        if(cash < 0) cash = 0;
+        upiAmtInput.value = (total-cash).toFixed(2);
+      }
+    }
+
+    function syncPending(){
+      const total = getTotalAmount();
+      let paid = parseFloat(paidNowInput.value)||0;
+      if(paid > total) paid = total;
+      if(paid < 0) paid = 0;
+      remainingInput.value = (total-paid).toFixed(2);
+    }
+
+    function reset(){
+      cashAmtInput.value = ''; upiAmtInput.value = '';
+      paidNowInput.value = ''; remainingInput.value = '';
+      $('#'+prefix+'-paid-mode').value = 'Cash';
+      updateVisibility();
+    }
+
+    paymentSel.addEventListener('change', ()=>{ cashAmtInput.value=''; upiAmtInput.value=''; paidNowInput.value=''; updateVisibility(); });
+    cashAmtInput.addEventListener('input', ()=>syncCashUpi('cash'));
+    upiAmtInput.addEventListener('input', ()=>syncCashUpi('upi'));
+    paidNowInput.addEventListener('input', syncPending);
+
+    return { updateVisibility, syncCashUpi, syncPending, reset };
+  }
+
   // ---------- Tabs ----------
   $$('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.view)));
 
@@ -1474,6 +1602,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   // ---------- Sell Stock ----------
   if(!$('#sale-date').value) $('#sale-date').value = new Date().toISOString().slice(0,10);
   let editingSaleId = null;
+  const saleSplit = setupPaymentSplit('sale', ()=> (parseFloat($('#sale-qty').value)||0) * (parseFloat($('#sale-price').value)||0));
 
   function populateSaleItemSelect(){
     const sel = $('#sale-item');
@@ -1495,6 +1624,8 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     }
   }
   $('#sale-item').addEventListener('change', ()=>{ $('#sale-price').value=''; updateSaleAvailable(); });
+  $('#sale-qty').addEventListener('input', ()=>{ saleSplit.updateVisibility(); });
+  $('#sale-price').addEventListener('input', ()=>{ saleSplit.updateVisibility(); });
 
   function showSaleMsg(text){
     const el = $('#sale-msg');
@@ -1511,11 +1642,31 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#sale-payment').value = 'Cash';
     $('#sale-customer-name').value = '';
     $('#sale-customer-mobile').value = '';
+    saleSplit.reset();
     editingSaleId = null;
     $('#sale-btn').textContent = 'Record Sale';
     $('#sale-form-title').firstChild.textContent = 'Sell Stock ';
     $('#sale-cancel-btn').style.display = 'none';
     showSaleMsg('');
+  }
+
+  function readPaymentSplit(prefix, paymentMode, totalAmount){
+    const extra = {};
+    if(paymentMode==='Cash+UPI'){
+      let cash = parseFloat($('#'+prefix+'-cash-amt').value)||0;
+      let upi = parseFloat($('#'+prefix+'-upi-amt').value)||0;
+      if(!cash && !upi){ cash = totalAmount/2; upi = totalAmount/2; }
+      extra.cashPortion = cash;
+      extra.upiPortion = upi;
+    } else if(paymentMode==='Pending'){
+      let paid = parseFloat($('#'+prefix+'-paid-now').value)||0;
+      if(paid > totalAmount) paid = totalAmount;
+      if(paid > 0){
+        extra.paidNow = paid;
+        extra.paidNowMode = $('#'+prefix+'-paid-mode').value;
+      }
+    }
+    return extra;
   }
 
   async function recordSale(itemId, qty, price, date, note, paymentMode, customerName, customerMobile){
@@ -1525,6 +1676,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     if(qty>item.qty){ showSaleMsg(`Only ${item.qty} ${item.unit} of "${item.name}" in stock.`); return false; }
     item.qty -= qty;
     await saveItems();
+    const amount = qty*price;
     txns.push({
       id: Date.now()+Math.random(),
       type: 'income',
@@ -1534,8 +1686,9 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       qty, unit: item.unit, pricePerUnit: price,
       date: date || new Date().toISOString().slice(0,10),
       category: 'Sales',
-      amount: qty*price,
+      amount,
       paymentMode: paymentMode || 'Cash',
+      ...readPaymentSplit('sale', paymentMode, amount),
       customerName: customerName || '',
       customerMobile: customerMobile || '',
       note: note || `Sold ${qty} ${item.unit} x ${item.name}`
@@ -1561,10 +1714,13 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       newItem.qty = newItem.qty + (t.qty||0) - newQty;
     }
     await saveItems();
+    const amount = newQty*newPrice;
+    delete t.cashPortion; delete t.upiPortion; delete t.paidNow; delete t.paidNowMode;
     Object.assign(t, {
       itemId: newItem.id, itemName: newItem.name, qty: newQty, unit: newItem.unit,
       pricePerUnit: newPrice, date: newDate || t.date, note: newNote,
-      paymentMode: newPaymentMode, amount: newQty*newPrice, source:'sale', type:'income', category:'Sales',
+      paymentMode: newPaymentMode, amount, source:'sale', type:'income', category:'Sales',
+      ...readPaymentSplit('sale', newPaymentMode, amount),
       customerName: customerName || '', customerMobile: customerMobile || ''
     });
     await saveTxns();
@@ -1611,6 +1767,11 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#sale-date').value = t.date;
     $('#sale-note').value = t.note && !/^Sold /.test(t.note) ? t.note : '';
     $('#sale-payment').value = t.paymentMode || 'Cash';
+    $('#sale-cash-amt').value = t.cashPortion!=null ? t.cashPortion : '';
+    $('#sale-upi-amt').value = t.upiPortion!=null ? t.upiPortion : '';
+    $('#sale-paid-now').value = t.paidNow!=null ? t.paidNow : '';
+    $('#sale-paid-mode').value = t.paidNowMode || 'Cash';
+    saleSplit.updateVisibility();
     $('#sale-customer-name').value = t.customerName || '';
     $('#sale-customer-mobile').value = t.customerMobile || '';
     editingSaleId = id;
@@ -1642,7 +1803,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       tb.innerHTML = `<tr class="empty-row"><td colspan="9">No sales recorded yet — use the form above.</td></tr>`;
     } else {
       tb.innerHTML = sales.map(t=>`<tr>
-        <td>${t.date}</td>
+        <td>${formatDate(t.date)}</td>
         <td>${esc(t.itemName || t.category)}</td>
         <td class="num">${t.qty!=null ? t.qty : '—'}</td>
         <td class="num">${t.pricePerUnit!=null ? fmt(t.pricePerUnit) : '—'}</td>
@@ -1676,6 +1837,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   // ---------- Purchase Stock ----------
   if(!$('#purchase-date').value) $('#purchase-date').value = new Date().toISOString().slice(0,10);
   let editingPurchaseId = null;
+  const purchaseSplit = setupPaymentSplit('purchase', ()=> (parseFloat($('#purchase-qty').value)||0) * (parseFloat($('#purchase-price').value)||0));
 
   function populatePurchaseItemSelect(){
     const sel = $('#purchase-item');
@@ -1697,6 +1859,8 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     }
   }
   $('#purchase-item').addEventListener('change', ()=>{ $('#purchase-price').value=''; updatePurchaseAvailable(); });
+  $('#purchase-qty').addEventListener('input', ()=>{ purchaseSplit.updateVisibility(); });
+  $('#purchase-price').addEventListener('input', ()=>{ purchaseSplit.updateVisibility(); });
 
   function showPurchaseMsg(text){
     const el = $('#purchase-msg');
@@ -1709,8 +1873,10 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#purchase-qty').value = '';
     $('#purchase-price').value = '';
     $('#purchase-note').value = '';
+    $('#purchase-supplier-name').value = '';
     $('#purchase-available').value = '';
     $('#purchase-payment').value = 'Cash';
+    purchaseSplit.reset();
     editingPurchaseId = null;
     $('#purchase-btn').textContent = 'Record Purchase';
     $('#purchase-form-title').firstChild.textContent = 'Purchase Stock ';
@@ -1718,13 +1884,14 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     showPurchaseMsg('');
   }
 
-  async function recordPurchase(itemId, qty, price, date, note, paymentMode){
+  async function recordPurchase(itemId, qty, price, date, note, paymentMode, supplierName){
     const item = items.find(i=>i.id===itemId);
     if(!item){ showPurchaseMsg('Please choose an item.'); return false; }
     if(!qty || qty<=0){ showPurchaseMsg('Enter a quantity greater than zero.'); return false; }
     item.qty += qty;
     if(price>0) item.cost = price;
     await saveItems();
+    const amount = qty*price;
     txns.push({
       id: Date.now()+Math.random(),
       type: 'expense',
@@ -1734,15 +1901,17 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       qty, unit: item.unit, pricePerUnit: price,
       date: date || new Date().toISOString().slice(0,10),
       category: 'Purchases',
-      amount: qty*price,
+      amount,
       paymentMode: paymentMode || 'Cash',
+      ...readPaymentSplit('purchase', paymentMode, amount),
+      supplierName: supplierName || '',
       note: note || `Purchased ${qty} ${item.unit} x ${item.name}`
     });
     await saveTxns();
     return true;
   }
 
-  async function updatePurchase(txnId, newItemId, newQty, newPrice, newDate, newNote, newPaymentMode){
+  async function updatePurchase(txnId, newItemId, newQty, newPrice, newDate, newNote, newPaymentMode, supplierName){
     const t = txns.find(x=>x.id===txnId);
     if(!t){ showPurchaseMsg('Could not find that purchase.'); return false; }
     const oldItem = items.find(i=>i.id===t.itemId);
@@ -1757,10 +1926,14 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     }
     if(newPrice>0) newItem.cost = newPrice;
     await saveItems();
+    const amount = newQty*newPrice;
+    delete t.cashPortion; delete t.upiPortion; delete t.paidNow; delete t.paidNowMode;
     Object.assign(t, {
       itemId: newItem.id, itemName: newItem.name, qty: newQty, unit: newItem.unit,
       pricePerUnit: newPrice, date: newDate || t.date, note: newNote,
-      paymentMode: newPaymentMode, amount: newQty*newPrice, source:'purchase', type:'expense', category:'Purchases'
+      paymentMode: newPaymentMode, amount, source:'purchase', type:'expense', category:'Purchases',
+      ...readPaymentSplit('purchase', newPaymentMode, amount),
+      supplierName: supplierName || ''
     });
     await saveTxns();
     return true;
@@ -1774,10 +1947,11 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const date = $('#purchase-date').value;
     const note = $('#purchase-note').value.trim();
     const paymentMode = $('#purchase-payment').value;
+    const supplierName = $('#purchase-supplier-name').value.trim();
     if(!item){ showPurchaseMsg('Please choose an item.'); return; }
     const ok = editingPurchaseId
-      ? await updatePurchase(editingPurchaseId, item.id, qty, price, date, note, paymentMode)
-      : await recordPurchase(item.id, qty, price, date, note, paymentMode);
+      ? await updatePurchase(editingPurchaseId, item.id, qty, price, date, note, paymentMode, supplierName)
+      : await recordPurchase(item.id, qty, price, date, note, paymentMode, supplierName);
     if(ok){ resetPurchaseForm(); renderAll(); }
   });
   $('#purchase-cancel-btn').addEventListener('click', resetPurchaseForm);
@@ -1803,7 +1977,13 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#purchase-price').value = t.pricePerUnit!=null ? t.pricePerUnit : '';
     $('#purchase-date').value = t.date;
     $('#purchase-note').value = t.note && !/^Purchased /.test(t.note) ? t.note : '';
+    $('#purchase-supplier-name').value = t.supplierName || '';
     $('#purchase-payment').value = t.paymentMode || 'Cash';
+    $('#purchase-cash-amt').value = t.cashPortion!=null ? t.cashPortion : '';
+    $('#purchase-upi-amt').value = t.upiPortion!=null ? t.upiPortion : '';
+    $('#purchase-paid-now').value = t.paidNow!=null ? t.paidNow : '';
+    $('#purchase-paid-mode').value = t.paidNowMode || 'Cash';
+    purchaseSplit.updateVisibility();
     editingPurchaseId = id;
     $('#purchase-btn').textContent = 'Update Purchase';
     $('#purchase-form-title').firstChild.textContent = 'Edit Purchase ';
@@ -1830,15 +2010,16 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const purchases = txns.filter(t=>t.source==='purchase')
       .sort((a,b)=>b.date.localeCompare(a.date));
     if(purchases.length===0){
-      tb.innerHTML = `<tr class="empty-row"><td colspan="8">No purchases recorded yet — use the form above.</td></tr>`;
+      tb.innerHTML = `<tr class="empty-row"><td colspan="9">No purchases recorded yet — use the form above.</td></tr>`;
     } else {
       tb.innerHTML = purchases.map(t=>`<tr>
-        <td>${t.date}</td>
+        <td>${formatDate(t.date)}</td>
         <td>${esc(t.itemName || t.category)}</td>
         <td class="num">${t.qty!=null ? t.qty : '—'}</td>
         <td class="num">${t.pricePerUnit!=null ? fmt(t.pricePerUnit) : '—'}</td>
         <td class="num type-expense">${fmt(t.amount)}</td>
         <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
+        <td>${t.supplierName ? esc(t.supplierName) : '—'}</td>
         <td>${esc(t.note||'—')}</td>
         <td>
           ${isAdmin() ? `<button class="btn small outline" data-editpurchase="${t.id}">Edit</button>` : ''}
@@ -1865,12 +2046,15 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
   // ---------- Transactions ----------
   let editingTxnId = null;
+  const txnSplit = setupPaymentSplit('txn', ()=> parseFloat($('#txn-amount').value)||0);
+  $('#txn-amount').addEventListener('input', ()=>{ txnSplit.updateVisibility(); });
 
   function resetTxnForm(){
     $('#txn-cat').value=''; $('#txn-amount').value=''; $('#txn-note').value='';
     $('#txn-date').value = new Date().toISOString().slice(0,10);
     $('#txn-type').value = 'income';
     $('#txn-payment').value = 'Cash';
+    txnSplit.reset();
     editingTxnId = null;
     $('#txn-add-btn').textContent = 'Add Entry';
     $('#txn-form-title').textContent = 'Record Entry';
@@ -1889,6 +2073,11 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#txn-amount').value = t.amount;
     $('#txn-note').value = t.note || '';
     $('#txn-payment').value = t.paymentMode || 'Cash';
+    $('#txn-cash-amt').value = t.cashPortion!=null ? t.cashPortion : '';
+    $('#txn-upi-amt').value = t.upiPortion!=null ? t.upiPortion : '';
+    $('#txn-paid-now').value = t.paidNow!=null ? t.paidNow : '';
+    $('#txn-paid-mode').value = t.paidNowMode || 'Cash';
+    txnSplit.updateVisibility();
     editingTxnId = id;
     $('#txn-add-btn').textContent = 'Update Entry';
     $('#txn-form-title').textContent = 'Edit Entry';
@@ -1908,9 +2097,12 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     if(!amount){ $('#txn-amount').focus(); return; }
     if(editingTxnId){
       const t = txns.find(x=>x.id===editingTxnId);
-      if(t){ Object.assign(t, {type, date, category, amount, note, paymentMode}); }
+      if(t){
+        delete t.cashPortion; delete t.upiPortion; delete t.paidNow; delete t.paidNowMode;
+        Object.assign(t, {type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount)});
+      }
     } else {
-      txns.push({id: Date.now()+Math.random(), type, date, category, amount, note, paymentMode});
+      txns.push({id: Date.now()+Math.random(), type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount)});
     }
     await saveTxns();
     resetTxnForm();
@@ -1942,7 +2134,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       tb.innerHTML = `<tr class="empty-row"><td colspan="7">No entries yet — record your first income or expense above.</td></tr>`;
     } else {
       tb.innerHTML = sorted.map(t=>`<tr>
-        <td>${t.date}</td>
+        <td>${formatDate(t.date)}</td>
         <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
         <td><span class="tag">${esc(t.category)}</span></td>
         <td>${esc(t.note||'—')}</td>
@@ -1973,19 +2165,33 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const net = totalIncome-totalExpense;
 
     const pending = txns.filter(t=>t.paymentMode==='Pending');
-    const pendingReceivable = pending.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-    const pendingPayable = pending.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const pendingReceivable = pending.filter(t=>t.type==='income').reduce((s,t)=>s+(t.amount-(t.paidNow||0)),0);
+    const pendingPayable = pending.filter(t=>t.type==='expense').reduce((s,t)=>s+(t.amount-(t.paidNow||0)),0);
     const pendingTotal = pendingReceivable + pendingPayable;
 
-    // Cash & Bank balances, split by payment mode. Cash+UPI is split evenly. Pending is excluded (not yet settled).
-    let cashBalance = 0, bankBalance = 0;
-    txns.forEach(t=>{
+    // Cash & Bank balances, split by payment mode. Cash+UPI uses the actual entered split (or an even split as fallback
+    // for older entries). Pending entries only contribute any partial amount already paid/received; the rest stays outstanding.
+    // Opening balances (set in Settings) are added as a starting point; if an "as of" date is set,
+    // only transactions from that date onward are counted on top of it (avoids double-counting backdated entries).
+    const openingCash = settings.openingCash || 0;
+    const openingBank = settings.openingBank || 0;
+    const openingDate = settings.openingDate || '';
+    let cashBalance = openingCash, bankBalance = openingBank;
+    txns.filter(t=> !openingDate || t.date >= openingDate).forEach(t=>{
       const sign = t.type==='income' ? 1 : -1;
       const mode = t.paymentMode;
       if(mode==='Cash') cashBalance += sign*t.amount;
       else if(mode==='UPI' || mode==='Bank') bankBalance += sign*t.amount;
-      else if(mode==='Cash+UPI'){ cashBalance += sign*t.amount/2; bankBalance += sign*t.amount/2; }
-      // 'Pending' and untagged entries are not yet in hand, excluded from both
+      else if(mode==='Cash+UPI'){
+        const cashPart = t.cashPortion!=null ? t.cashPortion : t.amount/2;
+        const upiPart = t.upiPortion!=null ? t.upiPortion : t.amount/2;
+        cashBalance += sign*cashPart; bankBalance += sign*upiPart;
+      }
+      else if(mode==='Pending' && t.paidNow>0){
+        if(t.paidNowMode==='Cash') cashBalance += sign*t.paidNow;
+        else if(t.paidNowMode==='UPI' || t.paidNowMode==='Bank') bankBalance += sign*t.paidNow;
+      }
+      // The unpaid remainder of Pending entries, and fully untagged entries, stay excluded from both.
     });
 
     const todayStr = new Date().toISOString().slice(0,10);
@@ -1996,12 +2202,12 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       <div class="stat-card-hero cash">
         <div class="hero-label">Cash Balance</div>
         <div class="hero-value">₹ ${fmt(cashBalance)}</div>
-        <div class="hero-sub">Cash-tagged income minus expenses</div>
+        <div class="hero-sub">${openingCash ? `Includes ₹${fmt(openingCash)} opening balance` : 'Cash-tagged income minus expenses'}</div>
       </div>
       <div class="stat-card-hero bank">
         <div class="hero-label">Bank Balance</div>
         <div class="hero-value">₹ ${fmt(bankBalance)}</div>
-        <div class="hero-sub">UPI &amp; Bank-tagged income minus expenses</div>
+        <div class="hero-sub">${openingBank ? `Includes ₹${fmt(openingBank)} opening balance` : 'UPI &amp; Bank-tagged income minus expenses'}</div>
       </div>
     `;
 
@@ -2019,12 +2225,14 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const pb = $('#dash-pending');
     const pendingSorted = [...pending].sort((a,b)=>b.date.localeCompare(a.date));
     pb.innerHTML = pendingSorted.length===0
-      ? `<tr class="empty-row"><td colspan="5">No pending payments — all sales and purchases are settled.</td></tr>`
+      ? `<tr class="empty-row"><td colspan="7">No pending payments — all sales and purchases are settled.</td></tr>`
       : pendingSorted.map(t=>`<tr>
-          <td>${t.date}</td>
+          <td>${formatDate(t.date)}</td>
           <td class="${t.type==='income'?'type-income':'type-expense'}">${t.source==='sale'?'Sale':t.source==='purchase'?'Purchase':(t.type==='income'?'Income':'Expense')}</td>
           <td>${esc(t.itemName||t.category)}</td>
           <td class="num">${fmt(t.amount)}</td>
+          <td class="num">${t.paidNow ? fmt(t.paidNow) : '—'}</td>
+          <td class="num">${fmt(t.amount-(t.paidNow||0))}</td>
           <td>${esc(t.note||'—')}</td>
         </tr>`).join('');
 
@@ -2039,7 +2247,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     rb.innerHTML = recent.length===0
       ? `<tr class="empty-row"><td colspan="5">No entries recorded yet.</td></tr>`
       : recent.map(t=>`<tr>
-          <td>${t.date}</td>
+          <td>${formatDate(t.date)}</td>
           <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
           <td><span class="tag">${esc(t.category)}</span></td>
           <td>${esc(t.note||'—')}</td>
@@ -2049,6 +2257,8 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
   // ---------- Reports ----------
   let currentReport = 'itemstock';
+  let catSortMode = 'amount-desc';
+  let catDetailFilter = null;
   let currentReportData = null; // { title, headers, rows } used for CSV/PDF export
 
   function setCurrentReportData(title, headers, rows){
@@ -2198,16 +2408,16 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       const colorClass = isSale ? 'green' : 'red';
       body.innerHTML = `
         <table>
-          <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Price/Unit</th><th class="num">Amount</th><th>Payment</th>${isSale?'<th>Customer</th>':''}<th>Note</th></tr></thead>
+          <thead><tr><th>Date</th><th>Item</th><th class="num">Qty</th><th class="num">Price/Unit</th><th class="num">Amount</th><th>Payment</th>${isSale?'<th>Customer</th>':'<th>Supplier</th>'}<th>Note</th></tr></thead>
           <tbody>
             ${list.map(t=>`<tr>
-              <td>${t.date}</td>
+              <td>${formatDate(t.date)}</td>
               <td>${esc(t.itemName || t.category)}</td>
               <td class="num">${t.qty!=null?t.qty:'—'}</td>
               <td class="num">${t.pricePerUnit!=null?fmt(t.pricePerUnit):'—'}</td>
               <td class="num">${fmt(t.amount)}</td>
               <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
-              ${isSale?`<td>${t.customerName?esc(t.customerName):'—'}${t.customerMobile?' ('+esc(t.customerMobile)+')':''}</td>`:''}
+              ${isSale?`<td>${t.customerName?esc(t.customerName):'—'}${t.customerMobile?' ('+esc(t.customerMobile)+')':''}</td>`:`<td>${t.supplierName?esc(t.supplierName):'—'}</td>`}
               <td>${esc(t.note||'—')}</td>
             </tr>`).join('')}
           </tbody>
@@ -2223,10 +2433,10 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       `;
       if(isSale){
         setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price per Unit','Amount','Payment Mode','Customer','Mobile','Note'],
-          list.map(t=>[t.date, t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.customerName||'', t.customerMobile||'', t.note||'']));
+          list.map(t=>[formatDate(t.date), t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.customerName||'', t.customerMobile||'', t.note||'']));
       } else {
-        setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price per Unit','Amount','Payment Mode','Note'],
-          list.map(t=>[t.date, t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.note||'']));
+        setCurrentReportData(`${label} Report`, ['Date','Item','Qty','Price per Unit','Amount','Payment Mode','Supplier','Note'],
+          list.map(t=>[formatDate(t.date), t.itemName||t.category, t.qty!=null?t.qty:'', t.pricePerUnit!=null?t.pricePerUnit.toFixed(2):'', t.amount.toFixed(2), t.paymentMode||'', t.supplierName||'', t.note||'']));
       }
       return;
     }
@@ -2263,23 +2473,43 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const maxE = Math.max(1, ...expenseByCategory.map(g=>g[1]));
     const maxII = Math.max(1, ...incomeByItem.map(g=>g[1]));
     const maxEI = Math.max(1, ...expenseByItem.map(g=>g[1]));
-    const categorySummaryRows = [
+    let categorySummaryRows = [
       ...incomeByCategory.map(([cat,val])=>({ type:'Income', cat, val, pct: totalIncome>0 ? (val/totalIncome*100) : 0 })),
       ...expenseByCategory.map(([cat,val])=>({ type:'Expense', cat, val, pct: totalExpense>0 ? (val/totalExpense*100) : 0 })),
     ];
+    const sortMode = catSortMode;
+    if(sortMode==='amount-desc') categorySummaryRows.sort((a,b)=>b.val-a.val);
+    else if(sortMode==='amount-asc') categorySummaryRows.sort((a,b)=>a.val-b.val);
+    else if(sortMode==='category-az') categorySummaryRows.sort((a,b)=>a.cat.localeCompare(b.cat));
+    else if(sortMode==='category-za') categorySummaryRows.sort((a,b)=>b.cat.localeCompare(a.cat));
+    else if(sortMode==='type') categorySummaryRows.sort((a,b)=> a.type===b.type ? b.val-a.val : (a.type==='Income'?-1:1));
+    const entriesForTable = catDetailFilter ? filtered.filter(t=>t.category===catDetailFilter) : filtered;
     body.innerHTML = `
-      <h2 class="section-title" style="margin-top:0;">Category-wise Summary</h2>
+      <h2 class="section-title" style="margin-top:0;">
+        <span>Category-wise Summary</span>
+        <span class="stamp" style="display:flex; align-items:center; gap:6px; text-transform:none; letter-spacing:normal;">
+          Sort by
+          <select id="cat-sort-mode" style="font-family:'Inter',sans-serif; font-size:12px; padding:4px 6px; border:1px solid var(--line); border-radius:5px; text-transform:none;">
+            <option value="amount-desc" ${sortMode==='amount-desc'?'selected':''}>Amount (High to Low)</option>
+            <option value="amount-asc" ${sortMode==='amount-asc'?'selected':''}>Amount (Low to High)</option>
+            <option value="category-az" ${sortMode==='category-az'?'selected':''}>Category (A–Z)</option>
+            <option value="category-za" ${sortMode==='category-za'?'selected':''}>Category (Z–A)</option>
+            <option value="type" ${sortMode==='type'?'selected':''}>Income first, then Expense</option>
+          </select>
+        </span>
+      </h2>
       <table style="margin-bottom:22px;">
         <thead><tr><th>Type</th><th>Category</th><th class="num">Total Amount</th><th class="num">% of Total</th></tr></thead>
         <tbody>
-          ${categorySummaryRows.map(r=>`<tr>
+          ${categorySummaryRows.map(r=>`<tr class="cat-drill-row" data-cat="${esc(r.cat)}" style="cursor:pointer;">
             <td class="type-${r.type==='Income'?'income':'expense'}">${r.type}</td>
-            <td><span class="tag">${esc(r.cat)}</span></td>
+            <td><span class="tag">${esc(r.cat)}</span>${catDetailFilter===r.cat?' <span style="font-size:10px;color:var(--gold);">● viewing</span>':''}</td>
             <td class="num type-${r.type==='Income'?'income':'expense'}">${r.type==='Income'?'+':'-'}${fmt(r.val)}</td>
             <td class="num">${r.pct.toFixed(1)}%</td>
           </tr>`).join('')}
         </tbody>
       </table>
+      <p style="font-size:11.5px;color:var(--ink-soft);margin:-14px 0 22px;">Click any category row above to see just its entries below.</p>
       <h2 class="section-title">Income by Category</h2>
       ${incomeByCategory.length===0 ? '<p style="color:var(--ink-soft);font-style:italic;">No income entries.</p>' :
         incomeByCategory.map(([cat,val])=>`
@@ -2312,27 +2542,44 @@ alter publication supabase_realtime add table kavaad_workspace;`;
           <div class="bar-track"><div class="bar-fill red" style="width:${(val/maxEI*100)}%"></div></div>
           <div class="bar-value">₹ ${fmt(val)}</div>
         </div>`).join('')}` : ''}
-      <h2 class="section-title">All Entries</h2>
+      <h2 class="section-title">
+        <span>${catDetailFilter ? `Entries: ${esc(catDetailFilter)}` : 'All Entries'}</span>
+        ${catDetailFilter ? `<button class="btn small outline" id="cat-drill-clear-btn">Show All Categories</button>` : ''}
+      </h2>
       <table>
-        <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Item</th><th>Payment</th><th class="num">Amount</th><th>Note</th></tr></thead>
+        <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Item</th><th>Payment</th><th>Customer/Supplier</th><th class="num">Amount</th><th>Note</th></tr></thead>
         <tbody>
-          ${filtered.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr>
-            <td>${t.date}</td>
+          ${entriesForTable.length===0 ? `<tr class="empty-row"><td colspan="8">No entries in this category for the current filters.</td></tr>` :
+            entriesForTable.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>`<tr>
+            <td>${formatDate(t.date)}</td>
             <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
             <td><span class="tag">${esc(t.category)}</span></td>
             <td>${t.itemName?esc(t.itemName):'—'}</td>
             <td>${esc(t.paymentMode||'—')}</td>
+            <td>${esc(t.customerName || t.supplierName || '—')}</td>
             <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
             <td>${esc(t.note||'—')}</td>
           </tr>`).join('')}
         </tbody>
       </table>
-      <div class="net-line">Total income: ₹ ${fmt(totalIncome)} &nbsp;|&nbsp; Total expense: ₹ ${fmt(totalExpense)} &nbsp;|&nbsp; Net: ₹ ${fmt(net)}</div>
+      <div class="net-line">
+        ${catDetailFilter ? `"${esc(catDetailFilter)}" total: ₹ ${fmt(entriesForTable.reduce((s,t)=>s+t.amount,0))} &nbsp;|&nbsp; ` : ''}
+        Total income: ₹ ${fmt(totalIncome)} &nbsp;|&nbsp; Total expense: ₹ ${fmt(totalExpense)} &nbsp;|&nbsp; Net: ₹ ${fmt(net)}
+      </div>
     `;
-    const rows = filtered.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[
-      t.date, t.type==='income'?'Income':'Expense', t.category, t.itemName||'', t.paymentMode||'', t.amount.toFixed(2), t.note||''
+    const rows = entriesForTable.sort((a,b)=>b.date.localeCompare(a.date)).map(t=>[
+      formatDate(t.date), t.type==='income'?'Income':'Expense', t.category, t.itemName||'', t.paymentMode||'', t.customerName || t.supplierName || '', t.amount.toFixed(2), t.note||''
     ]);
-    setCurrentReportData('Income & Expense Report', ['Date','Type','Category','Item','Payment Mode','Amount','Note'], rows);
+    setCurrentReportData(catDetailFilter ? `Income & Expense Report — ${catDetailFilter}` : 'Income & Expense Report', ['Date','Type','Category','Item','Payment Mode','Customer/Supplier','Amount','Note'], rows);
+    const sortSel = $('#cat-sort-mode');
+    if(sortSel) sortSel.addEventListener('change', ()=>{ catSortMode = sortSel.value; renderReport(); });
+    $$('.cat-drill-row', body).forEach(row=>row.addEventListener('click', ()=>{
+      catDetailFilter = row.dataset.cat;
+      renderReport();
+      const anchor = $('#report-body h2.section-title:last-of-type') || body;
+    }));
+    const clearBtn = $('#cat-drill-clear-btn');
+    if(clearBtn) clearBtn.addEventListener('click', ()=>{ catDetailFilter = null; renderReport(); });
   }
 
   // ---------- CSV / PDF export ----------
@@ -2402,7 +2649,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const sorted = [...txns].sort((a,b)=>b.date.localeCompare(a.date));
     const headers = ['Date','Type','Category','Note','Payment','Amount'];
     const rows = sorted.map(t=>[
-      t.date, t.type==='income'?'Income':'Expense', t.category,
+      formatDate(t.date), t.type==='income'?'Income':'Expense', t.category,
       t.note||'', t.paymentMode||'', (t.type==='income'?'':'-') + t.amount.toFixed(2)
     ]);
     return { title:'Cashbook', headers, rows };
@@ -2423,7 +2670,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const partyLabel = isSale ? 'Sold to' : 'Purchased from';
     const partyValue = isSale
       ? (t.customerName || (t.note && !/^Sold /.test(t.note) ? t.note : '—'))
-      : (t.note && !/^Purchased /.test(t.note) ? t.note : '—');
+      : (t.supplierName || (t.note && !/^Purchased /.test(t.note) ? t.note : '—'));
     const companyName = settings.companyName || 'Kavaad';
     const companyTagline = settings.tagline || 'Stock & Cashbook Ledger';
     const contactLine = [settings.address, settings.phone].filter(Boolean).join(' &nbsp;|&nbsp; ');
@@ -2453,7 +2700,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     ${contactLine ? `<div class="contact">${contactLine}</div>` : ''}
   </div>
   <div class="bill-title">${esc(docTitle)}</div>
-  <div class="meta"><strong>Date:</strong> ${esc(t.date)}</div>
+  <div class="meta"><strong>Date:</strong> ${esc(formatDate(t.date))}</div>
   <div class="meta"><strong>${esc(partyLabel)}:</strong> ${esc(partyValue)}</div>
   ${isSale && t.customerMobile ? `<div class="meta"><strong>Mobile:</strong> ${esc(t.customerMobile)}</div>` : ''}
   <div class="meta"><strong>Payment mode:</strong> ${esc(t.paymentMode || '—')}</div>
@@ -2487,7 +2734,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const label = isSale ? 'Sales Receipt' : 'Purchase Voucher';
     const lines = [
       `*${companyName}* — ${label}`,
-      `Date: ${t.date}`,
+      `Date: ${formatDate(t.date)}`,
       isSale && t.customerName ? `Customer: ${t.customerName}` : null,
       `Item: ${t.itemName || t.category}${t.qty!=null?` (${t.qty}${t.unit?' '+t.unit:''})`:''}`,
       t.pricePerUnit!=null ? `Rate: ₹ ${fmt(t.pricePerUnit)}` : null,
