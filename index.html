@@ -286,7 +286,7 @@
     <div class="cards-row" id="dash-cards"></div>
     <h2 class="section-title" id="pending-payments-anchor">Pending Payments <span class="stamp">Sales &amp; purchases marked Pending</span></h2>
     <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Note</th></tr></thead>
+      <thead><tr><th>Date</th><th>Type</th><th>Item</th><th>Customer/Supplier</th><th class="num">Total</th><th class="num">Paid</th><th class="num">Outstanding</th><th>Note</th></tr></thead>
       <tbody id="dash-pending"></tbody>
     </table>
     <h2 class="section-title">Low Stock Watch <span class="stamp">Qty at or below reorder level</span></h2>
@@ -296,7 +296,7 @@
     </table>
     <h2 class="section-title">Recent Entries <span class="stamp">Last 6 transactions</span></h2>
     <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th class="num">Amount</th></tr></thead>
+      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Customer/Supplier</th><th>Note</th><th class="num">Amount</th></tr></thead>
       <tbody id="dash-recent"></tbody>
     </table>
   </div>
@@ -443,6 +443,7 @@
           <select id="txn-paid-mode"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Bank">Bank</option></select>
         </div>
         <div class="field" id="txn-split-remaining" style="display:none;"><label>Still pending</label><input id="txn-pending-remaining" disabled placeholder="0.00"/></div>
+        <div class="field"><label id="txn-party-label">Received From</label><input id="txn-party-name" placeholder="optional"/></div>
         <div class="field"><label>Note</label><input id="txn-note" placeholder="optional"/></div>
         <div class="field"><button class="btn" id="txn-add-btn">Add Entry</button></div>
         <div class="field"><button class="btn outline" id="txn-cancel-btn" style="display:none;">Cancel</button></div>
@@ -456,7 +457,7 @@
       </span>
     </h2>
     <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Note</th><th>Payment</th><th class="num">Amount</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Customer/Supplier</th><th>Note</th><th>Payment</th><th class="num">Amount</th><th></th></tr></thead>
       <tbody id="txn-table-body"></tbody>
     </table>
   </div>
@@ -2049,12 +2050,19 @@ alter publication supabase_realtime add table kavaad_workspace;`;
   const txnSplit = setupPaymentSplit('txn', ()=> parseFloat($('#txn-amount').value)||0);
   $('#txn-amount').addEventListener('input', ()=>{ txnSplit.updateVisibility(); });
 
+  function updateTxnPartyLabel(){
+    $('#txn-party-label').textContent = $('#txn-type').value==='income' ? 'Received From' : 'Paid To';
+  }
+  $('#txn-type').addEventListener('change', updateTxnPartyLabel);
+  updateTxnPartyLabel();
+
   function resetTxnForm(){
-    $('#txn-cat').value=''; $('#txn-amount').value=''; $('#txn-note').value='';
+    $('#txn-cat').value=''; $('#txn-amount').value=''; $('#txn-note').value=''; $('#txn-party-name').value='';
     $('#txn-date').value = new Date().toISOString().slice(0,10);
     $('#txn-type').value = 'income';
     $('#txn-payment').value = 'Cash';
     txnSplit.reset();
+    updateTxnPartyLabel();
     editingTxnId = null;
     $('#txn-add-btn').textContent = 'Add Entry';
     $('#txn-form-title').textContent = 'Record Entry';
@@ -2072,12 +2080,14 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     $('#txn-cat').value = t.category;
     $('#txn-amount').value = t.amount;
     $('#txn-note').value = t.note || '';
+    $('#txn-party-name').value = t.customerName || t.supplierName || '';
     $('#txn-payment').value = t.paymentMode || 'Cash';
     $('#txn-cash-amt').value = t.cashPortion!=null ? t.cashPortion : '';
     $('#txn-upi-amt').value = t.upiPortion!=null ? t.upiPortion : '';
     $('#txn-paid-now').value = t.paidNow!=null ? t.paidNow : '';
     $('#txn-paid-mode').value = t.paidNowMode || 'Cash';
     txnSplit.updateVisibility();
+    updateTxnPartyLabel();
     editingTxnId = id;
     $('#txn-add-btn').textContent = 'Update Entry';
     $('#txn-form-title').textContent = 'Edit Entry';
@@ -2094,15 +2104,19 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const amount = parseFloat($('#txn-amount').value)||0;
     const note = $('#txn-note').value.trim();
     const paymentMode = $('#txn-payment').value;
+    const partyName = $('#txn-party-name').value.trim();
+    const partyFields = type==='income'
+      ? { customerName: partyName, supplierName: '' }
+      : { customerName: '', supplierName: partyName };
     if(!amount){ $('#txn-amount').focus(); return; }
     if(editingTxnId){
       const t = txns.find(x=>x.id===editingTxnId);
       if(t){
         delete t.cashPortion; delete t.upiPortion; delete t.paidNow; delete t.paidNowMode;
-        Object.assign(t, {type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount)});
+        Object.assign(t, {type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount), ...partyFields});
       }
     } else {
-      txns.push({id: Date.now()+Math.random(), type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount)});
+      txns.push({id: Date.now()+Math.random(), type, date, category, amount, note, paymentMode, ...readPaymentSplit('txn', paymentMode, amount), ...partyFields});
     }
     await saveTxns();
     resetTxnForm();
@@ -2131,12 +2145,13 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const tb = $('#txn-table-body');
     const sorted = [...txns].sort((a,b)=> b.date.localeCompare(a.date));
     if(sorted.length===0){
-      tb.innerHTML = `<tr class="empty-row"><td colspan="7">No entries yet — record your first income or expense above.</td></tr>`;
+      tb.innerHTML = `<tr class="empty-row"><td colspan="8">No entries yet — record your first income or expense above.</td></tr>`;
     } else {
       tb.innerHTML = sorted.map(t=>`<tr>
         <td>${formatDate(t.date)}</td>
         <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
         <td><span class="tag">${esc(t.category)}</span></td>
+        <td>${t.customerName ? esc(t.customerName) : (t.supplierName ? esc(t.supplierName) : '—')}</td>
         <td>${esc(t.note||'—')}</td>
         <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
         <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
@@ -2225,11 +2240,12 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const pb = $('#dash-pending');
     const pendingSorted = [...pending].sort((a,b)=>b.date.localeCompare(a.date));
     pb.innerHTML = pendingSorted.length===0
-      ? `<tr class="empty-row"><td colspan="7">No pending payments — all sales and purchases are settled.</td></tr>`
+      ? `<tr class="empty-row"><td colspan="8">No pending payments — all sales and purchases are settled.</td></tr>`
       : pendingSorted.map(t=>`<tr>
           <td>${formatDate(t.date)}</td>
           <td class="${t.type==='income'?'type-income':'type-expense'}">${t.source==='sale'?'Sale':t.source==='purchase'?'Purchase':(t.type==='income'?'Income':'Expense')}</td>
           <td>${esc(t.itemName||t.category)}</td>
+          <td>${esc(t.customerName || t.supplierName || '—')}</td>
           <td class="num">${fmt(t.amount)}</td>
           <td class="num">${t.paidNow ? fmt(t.paidNow) : '—'}</td>
           <td class="num">${fmt(t.amount-(t.paidNow||0))}</td>
@@ -2245,11 +2261,12 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const recent = [...txns].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
     const rb = $('#dash-recent');
     rb.innerHTML = recent.length===0
-      ? `<tr class="empty-row"><td colspan="5">No entries recorded yet.</td></tr>`
+      ? `<tr class="empty-row"><td colspan="6">No entries recorded yet.</td></tr>`
       : recent.map(t=>`<tr>
           <td>${formatDate(t.date)}</td>
           <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
           <td><span class="tag">${esc(t.category)}</span></td>
+          <td>${esc(t.customerName || t.supplierName || '—')}</td>
           <td>${esc(t.note||'—')}</td>
           <td class="num type-${t.type}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</td>
         </tr>`).join('');
@@ -2647,10 +2664,10 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
   function getCashbookExportData(){
     const sorted = [...txns].sort((a,b)=>b.date.localeCompare(a.date));
-    const headers = ['Date','Type','Category','Note','Payment','Amount'];
+    const headers = ['Date','Type','Category','Customer/Supplier','Note','Payment','Amount'];
     const rows = sorted.map(t=>[
       formatDate(t.date), t.type==='income'?'Income':'Expense', t.category,
-      t.note||'', t.paymentMode||'', (t.type==='income'?'':'-') + t.amount.toFixed(2)
+      t.customerName || t.supplierName || '', t.note||'', t.paymentMode||'', (t.type==='income'?'':'-') + t.amount.toFixed(2)
     ]);
     return { title:'Cashbook', headers, rows };
   }
@@ -2736,6 +2753,7 @@ alter publication supabase_realtime add table kavaad_workspace;`;
       `*${companyName}* — ${label}`,
       `Date: ${formatDate(t.date)}`,
       isSale && t.customerName ? `Customer: ${t.customerName}` : null,
+      !isSale && t.supplierName ? `Supplier: ${t.supplierName}` : null,
       `Item: ${t.itemName || t.category}${t.qty!=null?` (${t.qty}${t.unit?' '+t.unit:''})`:''}`,
       t.pricePerUnit!=null ? `Rate: ₹ ${fmt(t.pricePerUnit)}` : null,
       `Amount: ₹ ${fmt(t.amount)}`,
