@@ -457,7 +457,7 @@
       </span>
     </h2>
     <table>
-      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Customer/Supplier</th><th>Note</th><th>Payment</th><th class="num">Amount</th><th></th></tr></thead>
+      <thead><tr><th>Date</th><th>Type</th><th>Category</th><th>Item</th><th>Customer/Supplier</th><th>Note</th><th>Payment</th><th class="num">Amount</th><th></th></tr></thead>
       <tbody id="txn-table-body"></tbody>
     </table>
   </div>
@@ -2145,12 +2145,13 @@ alter publication supabase_realtime add table kavaad_workspace;`;
     const tb = $('#txn-table-body');
     const sorted = [...txns].sort((a,b)=> b.date.localeCompare(a.date));
     if(sorted.length===0){
-      tb.innerHTML = `<tr class="empty-row"><td colspan="8">No entries yet — record your first income or expense above.</td></tr>`;
+      tb.innerHTML = `<tr class="empty-row"><td colspan="9">No entries yet — record your first income or expense above.</td></tr>`;
     } else {
       tb.innerHTML = sorted.map(t=>`<tr>
         <td>${formatDate(t.date)}</td>
         <td class="type-${t.type}">${t.type==='income'?'Income':'Expense'}</td>
         <td><span class="tag">${esc(t.category)}</span></td>
+        <td>${t.itemName ? esc(t.itemName) + (t.qty!=null?` <span style="color:var(--ink-soft);">(${t.qty}${t.unit?' '+esc(t.unit):''})</span>`:'') : '—'}</td>
         <td>${t.customerName ? esc(t.customerName) : (t.supplierName ? esc(t.supplierName) : '—')}</td>
         <td>${esc(t.note||'—')}</td>
         <td><span class="tag">${esc(t.paymentMode || '—')}</span></td>
@@ -2664,9 +2665,10 @@ alter publication supabase_realtime add table kavaad_workspace;`;
 
   function getCashbookExportData(){
     const sorted = [...txns].sort((a,b)=>b.date.localeCompare(a.date));
-    const headers = ['Date','Type','Category','Customer/Supplier','Note','Payment','Amount'];
+    const headers = ['Date','Type','Category','Item','Customer/Supplier','Note','Payment','Amount'];
     const rows = sorted.map(t=>[
       formatDate(t.date), t.type==='income'?'Income':'Expense', t.category,
+      t.itemName ? `${t.itemName}${t.qty!=null?` (${t.qty}${t.unit?' '+t.unit:''})`:''}` : '',
       t.customerName || t.supplierName || '', t.note||'', t.paymentMode||'', (t.type==='income'?'':'-') + t.amount.toFixed(2)
     ]);
     return { title:'Cashbook', headers, rows };
